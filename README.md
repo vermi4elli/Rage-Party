@@ -23,8 +23,8 @@ but organize the multiplayer features and chat with Node.JS???
 ### Backend
 ```
 - Node.JS
-- WebSockets - multiplayer + chat
-- MessagePack ? - fast data serialization
+- Koa
+- [MessagePack](http://msgpack.org/index.html) ? - fast data serialization
 - PostgreSQL
 - IndexedDB - make the game "internet-addiction-free"
 - Pointer Lock API ?
