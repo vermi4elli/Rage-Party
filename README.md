@@ -24,7 +24,7 @@ but organize the multiplayer features and chat with Node.JS???
 ```
 - Node.JS
 - Koa
-- [MessagePack](http://msgpack.org/index.html) ? - fast data serialization
+- MessagePack ? - fast data serialization
 - PostgreSQL
 - IndexedDB - make the game "internet-addiction-free"
 - Pointer Lock API ?
