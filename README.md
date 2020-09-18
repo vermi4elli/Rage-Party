@@ -16,7 +16,9 @@
 ```
 - HTML5 + CSS
 - Full Screen API - to let the game 'take over' the entire screen
-- WebGL
+- WebGL ?
+??? Unity - it's possible to use Unity for the game itself,
+but organize the multiplayer features and chat with Node.JS???
 ```
 ### Backend
 ```
