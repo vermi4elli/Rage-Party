@@ -12,7 +12,6 @@
 
 ## Functionality Details
 - [ ] The pointer locks in the game fields borders;
-- [ ] 
 
 ## Technologies
 
