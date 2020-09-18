@@ -1,6 +1,6 @@
 # Rage-Party
 ## Description
-**Rage Party** is an online sandbox third-person-shooter with coop and pvp possibilities. Players can co-op in endless mode of enemy waves or compete against each other. The rating system shows the total rating of players.
+**Rage Party** is an online sandbox 2d third-person-shooter with coop and pvp possibilities. Players can co-op in endless mode of enemy waves or compete against each other. The rating system shows the total rating of players.
 ## Main Functionality
 - [ ] Players can register their own account;   
 - [ ] Players can communicate via a global or a team chat;
