@@ -10,6 +10,10 @@
   - [ ] delete their account and user information;
 - [ ] Players can choose which game mode to play;
 
+## Functionality Details
+- [ ] The pointer locks in the game fields borders;
+- [ ] 
+
 ## Technologies
 
 ### Frontend
@@ -22,7 +26,6 @@
 - Node.JS
 - Koa
 - MessagePack ? - fast data serialization
-- PostgreSQL
+- PostgreSQL - save the chat history, accounts data and scores
 - IndexedDB - make the game "internet-addiction-free"
-- Pointer Lock API ?
 ```
