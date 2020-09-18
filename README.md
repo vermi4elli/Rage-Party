@@ -22,6 +22,7 @@
 ```
 - Node.JS
 - WebSockets - multiplayer + chat
+- MessagePack ? - fast data serialization
 - PostgreSQL
 - IndexedDB - make the game "internet-addiction-free"
 - Pointer Lock API ?
