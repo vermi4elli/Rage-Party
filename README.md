@@ -15,7 +15,6 @@
 ### Frontend
 ```
 - HTML5 + CSS
-- Full Screen API - to let the game 'take over' the entire screen
 - WebGL
 ```
 ### Backend
