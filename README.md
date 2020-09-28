@@ -18,7 +18,7 @@
 ### Frontend
 ```
 - HTML5 + CSS
-- WebGL
+- PixiJS - WebGL
 ```
 ### Backend
 ```
