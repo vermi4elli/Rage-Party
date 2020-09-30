@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/vermi4elli/Rage-Party/issues"
   },
-  "homepage": "https://github.com/vermi4elli/Rage-Party#readme"
+  "homepage": "https://github.com/vermi4elli/Rage-Party#readme",
+  "devDependencies": {
+    "eslint": "^7.10.0"
+  }
 }
