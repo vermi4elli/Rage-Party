@@ -4,6 +4,7 @@
   "description": "**Rage Party** is an online sandbox 2d third-person-shooter with coop and pvp possibilities. Players can co-op in endless mode of enemy waves or compete against each other.",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,5 +20,10 @@
   "homepage": "https://github.com/vermi4elli/Rage-Party#readme",
   "devDependencies": {
     "eslint": "^7.10.0"
+  },
+  "dependencies": {
+    "koa": "^2.13.0",
+    "koa-router": "^9.4.0",
+    "pixi.js": "^5.3.3"
   }
 }
