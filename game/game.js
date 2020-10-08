@@ -46,18 +46,53 @@ stage.on('mouseup', event => {
 });
 
 // yet to make it modular
-const bullets = [];
+class BulletPool {
+  constructor(texture, bulletAmount, bulletSpeed) {
+    this.texture = texture;
+
+    this.active = false;
+    this.amount = bulletAmount;
+    this.speed = bulletSpeed;
+    this.bulletPool = [];
+
+    for (let i = 0; i < bulletAmount; i++) {
+      const bullet = new PIXI.Sprite(this.texture);
+      bullet.visible = false;
+      this.bulletPool.push(bullet);
+      stage.addChild(bullet);
+    }
+  }
+
+  next() {
+    this.active = true;
+    const bulletNext = this.bulletPool.pop();
+    bulletNext.visible = true;
+    this.bulletPool.unshift(bulletNext);
+    return bulletNext;
+  }
+
+  updateBulletsSpeed() {
+    if (this.active) {
+      for (let b = this.bulletPool.length - 1; b >= 0; b--) {
+        this.bulletPool[b].position.x +=
+          Math.cos(this.bulletPool[b].rotation) * this.speed;
+        this.bulletPool[b].position.y +=
+          Math.sin(this.bulletPool[b].rotation) * this.speed;
+      }
+    }
+  }
+}
 const bulletSpeed = 10;
+const bulletAmount = 10;
+const bulletPool = new BulletPool(bulletTexture, bulletAmount, bulletSpeed);
 
 function shoot(rotation, startPosition) {
-  const bullet = new PIXI.Sprite(bulletTexture);
+  const bullet = bulletPool.next();
   bullet.position.x = startPosition.x;
   bullet.position.y = startPosition.y;
   bullet.scale.x = 0.2;
   bullet.scale.y = 0.2;
   bullet.rotation = rotation;
-  stage.addChild(bullet);
-  bullets.push(bullet);
 }
 
 function rotateToPoint(mx, my, px, py) {
@@ -84,18 +119,16 @@ function animate() {
         player.position.x,
         player.position.y),
       {
-        x: player.position.x + Math.cos(player.rotation) * 20,
-        y: player.position.y + Math.sin(player.rotation) * 20
+        x: player.position.x,
+        y: player.position.y
       }
       );
     }
     ++player.shootingTimeout;
   }
 
-  for (let b = bullets.length - 1; b >= 0; b--) {
-    bullets[b].position.x += Math.cos(bullets[b].rotation) * bulletSpeed;
-    bullets[b].position.y += Math.sin(bullets[b].rotation) * bulletSpeed;
-  }
+  bulletPool.updateBulletsSpeed();
+
   // render the container
   renderer.render(stage);
 }
