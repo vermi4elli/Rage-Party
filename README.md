@@ -1,5 +1,5 @@
 # Rage-Party      
-![Build](https://github.com/vermi4elli/Rage-Party/workflows/Node.js%20CI/badge.svg)
+![Node.JS CI](https://github.com/vermi4elli/Rage-Party/workflows/Node.js%20CI/badge.svg)
 ## Description
 **Rage Party** is an online sandbox 2d third-person-shooter with coop and pvp possibilities. Players can co-op in endless mode of enemy waves or compete against each other. The rating system shows the total rating of players.
 ## Main Functionality
