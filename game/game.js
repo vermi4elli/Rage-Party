@@ -7,20 +7,20 @@ document.body.appendChild(renderer.view);
 // create the root of the scene graph
 const stage = new PIXI.Container();
 
-// create a texture from an image path
-const texture = PIXI.Texture.fromImage('assets/bunny.png');
-const carrotTex = PIXI.Texture.fromImage('assets/bullet.png');
-
 // create a new Sprite using the texture
-const bunny = new PIXI.Sprite(texture);
+const player = new PIXI.Sprite(bunnyTexture);
+
 
 // center the sprite's anchor point
-bunny.anchor.x = 0.5;
-bunny.anchor.y = 0.5;
+player.anchor.x = 0.5;
+player.anchor.y = 0.5;
 
 // move the sprite to the center of the screen
-bunny.position.x = 200;
-bunny.position.y = 150;
+player.position.x = 200;
+player.position.y = 150;
+
+player.vx = 0;
+player.vy = 0;
 
 const background = new PIXI.Graphics();
 background.beginFill(0x123456);
@@ -28,15 +28,20 @@ background.drawRect(0, 0, 800, 600);
 background.endFill();
 stage.addChild(background);
 
-stage.addChild(bunny);
+stage.addChild(player);
 
 stage.interactive = true;
 
 stage.on('mousedown', event => {
-  shoot(bunny.rotation, {
-    x: bunny.position.x + Math.cos(bunny.rotation) * 20,
-    y: bunny.position.y + Math.sin(bunny.rotation) * 20
-  });
+  shoot(rotateToPoint(renderer.plugins.interaction.mouse.global.x,
+    renderer.plugins.interaction.mouse.global.y,
+    player.position.x,
+    player.position.y),
+  {
+    x: player.position.x + Math.cos(player.rotation) * 20,
+    y: player.position.y + Math.sin(player.rotation) * 20
+  }
+  );
 });
 
 // yet to make it modular
@@ -44,7 +49,7 @@ const bullets = [];
 const bulletSpeed = 10;
 
 function shoot(rotation, startPosition) {
-  const bullet = new PIXI.Sprite(carrotTex);
+  const bullet = new PIXI.Sprite(bulletTexture);
   bullet.position.x = startPosition.x;
   bullet.position.y = startPosition.y;
   bullet.scale.x = 0.2;
@@ -58,9 +63,8 @@ function rotateToPoint(mx, my, px, py) {
   const self = this;
   const dist_Y = my - py;
   const dist_X = mx - px;
-  const angle = Math.atan2(dist_Y, dist_X);
   //var degrees = angle * 180/ Math.PI;
-  return angle;
+  return Math.atan2(dist_Y, dist_X); // the angle
 }
 
 // start animating
@@ -69,10 +73,13 @@ function animate() {
   requestAnimationFrame(animate);
 
   // just for fun, let's rotate mr rabbit a little
-  bunny.rotation = rotateToPoint(renderer.plugins.interaction.mouse.global.x,
-    renderer.plugins.interaction.mouse.global.y,
-    bunny.position.x,
-    bunny.position.y);
+  // bunny.rotation = rotateToPoint(renderer.plugins.interaction.mouse.global.x,
+  //   renderer.plugins.interaction.mouse.global.y,
+  //   bunny.position.x,
+  //   bunny.position.y);
+
+  player.position.x += player.vx;
+  player.position.y += player.vy;
 
   for (let b = bullets.length - 1; b >= 0; b--) {
     bullets[b].position.x += Math.cos(bullets[b].rotation) * bulletSpeed;

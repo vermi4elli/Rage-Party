@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "fastify": "^3.5.1",
-    "fastify-static": "^3.2.1",
-    "pixi.js": "^5.3.3"
+    "fastify-static": "^3.2.1"
   }
 }
