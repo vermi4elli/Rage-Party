@@ -23,7 +23,7 @@
 ### Backend
 ```
 - Node.JS
-- Koa
+- Fastify
 - MessagePack ? - fast data serialization
 - PostgreSQL - save the chat history, accounts data and scores
 - IndexedDB - make the game "internet-addiction-free"
