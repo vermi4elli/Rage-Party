@@ -9,19 +9,14 @@ fastify.register(require('fastify-static'), {
   //prefix: '/public/', // optional:
 });
 
-fastify.get('/another/path', (req, reply) => {
-  // serving path.join(__dirname, 'public', 'myHtml.html') directly
-  reply.sendFile('index.html');
-});
-
-// fastify.get('/path/with/different/root', (req, reply) => {
-//   // serving a file from a different root location
-//   reply.sendFile('myHtml.html', path.join(__dirname, 'build'));
+// fastify.get('/', (req, reply) => {
+//   // serving path.join(__dirname, 'public', 'myHtml.html') directly
+//   reply.sendFile('index.html');
 // });
 
-
 // Declare a route
-//fastify.get('/', async (request, reply) => ({ hello: 'world' }));
+fastify.get('/', async (request, reply) =>
+  (reply.sendFile('index.html')));
 
 // Run the server!
 const start = async () => {
