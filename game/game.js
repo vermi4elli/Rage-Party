@@ -22,6 +22,10 @@ player.position.y = 150;
 player.vx = 0;
 player.vy = 0;
 
+const gunTimeout = 10;
+player.shooting = false;
+player.shootingTimeout = gunTimeout;
+
 const background = new PIXI.Graphics();
 background.beginFill(0x123456);
 background.drawRect(0, 0, 800, 600);
@@ -33,15 +37,12 @@ stage.addChild(player);
 stage.interactive = true;
 
 stage.on('mousedown', event => {
-  shoot(rotateToPoint(renderer.plugins.interaction.mouse.global.x,
-    renderer.plugins.interaction.mouse.global.y,
-    player.position.x,
-    player.position.y),
-  {
-    x: player.position.x + Math.cos(player.rotation) * 20,
-    y: player.position.y + Math.sin(player.rotation) * 20
-  }
-  );
+  player.shooting = true;
+});
+
+stage.on('mouseup', event => {
+  player.shooting = false;
+  player.shootingTimeout = gunTimeout;
 });
 
 // yet to make it modular
@@ -72,14 +73,24 @@ animate();
 function animate() {
   requestAnimationFrame(animate);
 
-  // just for fun, let's rotate mr rabbit a little
-  // bunny.rotation = rotateToPoint(renderer.plugins.interaction.mouse.global.x,
-  //   renderer.plugins.interaction.mouse.global.y,
-  //   bunny.position.x,
-  //   bunny.position.y);
-
   player.position.x += player.vx;
   player.position.y += player.vy;
+
+  if (player.shooting) {
+    if (player.shootingTimeout === gunTimeout) {
+      player.shootingTimeout = 0;
+      shoot(rotateToPoint(renderer.plugins.interaction.mouse.global.x,
+        renderer.plugins.interaction.mouse.global.y,
+        player.position.x,
+        player.position.y),
+      {
+        x: player.position.x + Math.cos(player.rotation) * 20,
+        y: player.position.y + Math.sin(player.rotation) * 20
+      }
+      );
+    }
+    ++player.shootingTimeout;
+  }
 
   for (let b = bullets.length - 1; b >= 0; b--) {
     bullets[b].position.x += Math.cos(bullets[b].rotation) * bulletSpeed;
