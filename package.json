@@ -22,8 +22,8 @@
     "eslint": "^7.10.0"
   },
   "dependencies": {
-    "koa": "^2.13.0",
-    "koa-router": "^9.4.0",
+    "fastify": "^3.5.1",
+    "fastify-static": "^3.2.1",
     "pixi.js": "^5.3.3"
   }
 }
