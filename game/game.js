@@ -1,37 +1,41 @@
 'use strict';
 
 const renderer =
-  PIXI.autoDetectRenderer(800, 600, { backgroundColor: 0x1099bb });
+  PIXI.autoDetectRenderer(window.innerWidth,
+    window.innerHeight,
+    { backgroundColor: 0x1099bb });
 document.body.appendChild(renderer.view);
 
 // create the root of the scene graph
 const stage = new PIXI.Container();
 
+// create a background
+const dungeon = new PIXI.Sprite(mapTexture);
+dungeon.scale.x = 3;
+dungeon.scale.y = 3;
+stage.addChild(dungeon);
+
+
 // create a new Sprite using the texture
 const player = new PIXI.Sprite(bunnyTexture);
 
-
-// center the sprite's anchor point
-player.anchor.x = 0.5;
-player.anchor.y = 0.5;
-
 // move the sprite to the center of the screen
-player.position.x = 200;
-player.position.y = 150;
-
+player.position.x = renderer.width / 2;
+player.position.y = renderer.height / 2;
 player.vx = 0;
-player.vy = 0;
 
+player.vy = 0;
 const gunTimeout = 10;
 player.shooting = false;
+
 player.shootingTimeout = gunTimeout;
 
-const background = new PIXI.Graphics();
-background.beginFill(0x123456);
-background.drawRect(0, 0, 800, 600);
-background.endFill();
-stage.addChild(background);
+// background.beginFill(0x123456);
+// background.drawRect(0, 0, 800, 600);
+// background.endFill();
+// const background = new PIXI.Graphics();
 
+// stage.addChild(background);
 stage.addChild(player);
 
 stage.interactive = true;
@@ -96,22 +100,40 @@ function shoot(rotation, startPosition) {
 }
 
 function rotateToPoint(mx, my, px, py) {
-  const self = this;
-  const dist_Y = my - py;
-  const dist_X = mx - px;
-  //var degrees = angle * 180/ Math.PI;
-  return Math.atan2(dist_Y, dist_X); // the angle
+  const distY = my - py;
+  const distX = mx - px;
+  return Math.atan2(distY, distX); // the angle
+}
+
+function MovePlayer() {
+  const playerCollisions = contain(player, dungeon);
+
+  console.log(player.width + ' : ' + player.height + '; ' +
+    dungeon.width + ' : ' + dungeon.height);
+
+  if (playerCollisions.x === collisionType.no ||
+    ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
+    ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
+  ) {
+    dungeon.position.x -= player.vx;
+  }
+
+  if (playerCollisions.y === collisionType.no ||
+    ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
+    ((playerCollisions.y === collisionType.down) && (player.vy >= 0))
+  ) {
+    dungeon.position.y += player.vy;
+  }
 }
 
 // start animating
 animate();
 function animate() {
-  requestAnimationFrame(animate);
 
-  player.position.x += player.vx;
-  player.position.y += player.vy;
+  MovePlayer();
 
   if (player.shooting) {
+
     if (player.shootingTimeout === gunTimeout) {
       player.shootingTimeout = 0;
       shoot(rotateToPoint(renderer.plugins.interaction.mouse.global.x,
@@ -126,9 +148,10 @@ function animate() {
     }
     ++player.shootingTimeout;
   }
-
   bulletPool.updateBulletsSpeed();
 
   // render the container
   renderer.render(stage);
+
+  requestAnimationFrame(animate);
 }
