@@ -1,6 +1,6 @@
 'use strict';
 
-const linearSpeed = 5;
+const linearSpeed = 7;
 
 const left = keyboard('a'),
   up = keyboard('w'),

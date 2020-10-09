@@ -24,28 +24,28 @@ function checkCollisionX(sprite, container) {
 
 function contain(sprite, container) {
 
-  let collision = {
+  const collision = {
     x: collisionType.no,
     y: collisionType.no
   };
 
   //Left
-  if (sprite.x - sprite.transform.width / 2 === container.x) {
+  if (container.x > sprite.x) {
     collision.x = collisionType.left;
   }
 
   // Right
-  if (sprite.x + sprite.transform.width / 2 === container.x + container.width) {
+  if (sprite.position.x + sprite.width > container.position.x + container.width) {
     collision.x = collisionType.right;
   }
 
   //Top
-  if (sprite.y - sprite.transform.height / 2 === container.y) {
+  if (sprite.position.y < container.position.y) {
     collision.y = collisionType.top;
   }
 
   // Down
-  if (sprite.y + sprite.transform.height / 2 === container.y + container.height) {
+  if (sprite.position.y + sprite.height > container.position.y + container.height) {
     collision.y = collisionType.down;
   }
 

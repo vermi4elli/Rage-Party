@@ -108,20 +108,27 @@ function rotateToPoint(mx, my, px, py) {
 function MovePlayer() {
   const playerCollisions = contain(player, dungeon);
 
-  console.log(player.width + ' : ' + player.height + '; ' +
-    dungeon.width + ' : ' + dungeon.height);
+  console.log('pW: ' + player.width + '; pH: ' + player.height +
+    '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
+    '; ppX: ' + player.position.x + '; ppY' + player.position.y +
+    '; pX: ' + player.x + '; pY: ' + player.y +
+    '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
+    '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
+  );
 
   if (playerCollisions.x === collisionType.no ||
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
+    console.log('x is true');
     dungeon.position.x -= player.vx;
   }
-
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
     ((playerCollisions.y === collisionType.down) && (player.vy >= 0))
   ) {
+
+    console.log('y is true');
     dungeon.position.y += player.vy;
   }
 }
