@@ -35,7 +35,8 @@ function contain(sprite, container) {
   }
 
   // Right
-  if (sprite.position.x + sprite.width > container.position.x + container.width) {
+  if (sprite.position.x + sprite.width >
+    container.position.x + container.width) {
     collision.x = collisionType.right;
   }
 
@@ -45,7 +46,8 @@ function contain(sprite, container) {
   }
 
   // Down
-  if (sprite.position.y + sprite.height > container.position.y + container.height) {
+  if (sprite.position.y + sprite.height >
+    container.position.y + container.height) {
     collision.y = collisionType.down;
   }
 
