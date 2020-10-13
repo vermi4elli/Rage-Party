@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable no-undef */
+
 const renderer =
   PIXI.autoDetectRenderer(window.innerWidth,
     window.innerHeight,
@@ -40,11 +42,11 @@ stage.addChild(player);
 
 stage.interactive = true;
 
-stage.on('mousedown', event => {
+stage.on('mousedown', _ => {
   player.shooting = true;
 });
 
-stage.on('mouseup', event => {
+stage.on('mouseup', _ => {
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
 });

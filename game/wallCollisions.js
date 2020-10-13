@@ -8,20 +8,6 @@ const collisionType = {
   left: 4
 };
 
-function checkCollisionX(sprite, container) {
-  let collision;
-
-  if (sprite.x === container.x) {
-    collision = collisionType.left;
-  }
-
-  if (sprite.x + sprite.width > container.width) {
-    collision = collisionType.right;
-  }
-
-  return collision;
-}
-
 function contain(sprite, container) {
 
   const collision = {
