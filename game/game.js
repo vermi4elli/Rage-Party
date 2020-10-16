@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint-disable no-undef */
-
 const renderer =
   PIXI.autoDetectRenderer(window.innerWidth,
     window.innerHeight,

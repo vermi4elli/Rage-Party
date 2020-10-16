@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint-disable no-undef */
-
 const linearSpeed = 7;
 
 const left = keyboard('a'),
