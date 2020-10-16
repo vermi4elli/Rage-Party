@@ -4,5 +4,8 @@
     "keyboard": true,
     "player": true,
     "collisionType": true
-  }
+  },
+  "no-unused-vars": [
+    "warn"
+  ]
 }
