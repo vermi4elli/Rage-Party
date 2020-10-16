@@ -9,11 +9,7 @@
     "ecmaVersion": 2020
   },
   "globals": {
-    "BigInt": true,
-    "PIXI": true,
-    "keyboard": true,
-    "player": true,
-    "collisionType": true
+    "BigInt": true
   },
   "rules": {
     "indent": [

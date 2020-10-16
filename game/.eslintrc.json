@@ -1,0 +1,8 @@
+{
+  "globals": {
+    "PIXI": true,
+    "keyboard": true,
+    "player": true,
+    "collisionType": true
+  }
+}
