@@ -5,7 +5,9 @@
     "player": true,
     "collisionType": true
   },
-  "no-unused-vars": [
-    "warn"
-  ]
+  "rules": {
+    "no-unused-vars": [
+      "warn"
+    ]
+  }
 }
