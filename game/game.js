@@ -62,6 +62,8 @@ class BulletPool {
     for (let i = 0; i < bulletAmount; i++) {
       const bullet = new PIXI.Sprite(this.texture);
       bullet.visible = false;
+
+      bullet.direction = new PIXI.Point(0, 0);
       this.bulletPool.push(bullet);
       stage.addChild(bullet);
     }
@@ -78,10 +80,10 @@ class BulletPool {
   updateBulletsSpeed() {
     if (this.active) {
       for (let b = this.bulletPool.length - 1; b >= 0; b--) {
-        this.bulletPool[b].position.x +=
-          Math.cos(this.bulletPool[b].rotation) * this.speed;
-        this.bulletPool[b].position.y +=
-          Math.sin(this.bulletPool[b].rotation) * this.speed;
+        this.bulletPool[b].x +=
+          this.bulletPool[b].direction.x * this.speed;
+        this.bulletPool[b].y +=
+          this.bulletPool[b].direction.y * this.speed;
       }
     }
   }
@@ -90,38 +92,41 @@ const bulletSpeed = 10;
 const bulletAmount = 10;
 const bulletPool = new BulletPool(bulletTexture, bulletAmount, bulletSpeed);
 
-function shoot(rotation, startPosition) {
+function shoot(mX, mY) {
   const bullet = bulletPool.next();
-  bullet.position.x = startPosition.x;
-  bullet.position.y = startPosition.y;
+
+  bullet.direction.x = mX - player.x;
+  bullet.direction.y = mY - player.y;
+
+  const length = Math.sqrt(
+    bullet.direction.x * bullet.direction.x +
+    bullet.direction.y * bullet.direction.y);
+  bullet.direction.x /= length;
+  bullet.direction.y /= length;
+
+  bullet.position.x = player.x;
+  bullet.position.y = player.y;
   bullet.scale.x = 0.2;
   bullet.scale.y = 0.2;
-  bullet.rotation = rotation;
-}
-
-function rotateToPoint(mx, my, px, py) {
-  const distY = my - py;
-  const distX = mx - px;
-  return Math.atan2(distY, distX); // the angle
 }
 
 function MovePlayer() {
   const playerCollisions = contain(player, dungeon);
 
-  console.log('pW: ' + player.width + '; pH: ' + player.height +
-    '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
-    '; ppX: ' + player.position.x + '; ppY' + player.position.y +
-    '; pX: ' + player.x + '; pY: ' + player.y +
-    '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
-    '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
-  );
+  // console.log('pW: ' + player.width + '; pH: ' + player.height +
+  //   '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
+  //   '; ppX: ' + player.position.x + '; ppY' + player.position.y +
+  //   '; pX: ' + player.x + '; pY: ' + player.y +
+  //   '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
+  //   '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
+  // );
 
   if (playerCollisions.x === collisionType.no ||
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
     console.log('x is true');
-    dungeon.position.x -= player.vx;
+    player.position.x += player.vx;
   }
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
@@ -129,7 +134,7 @@ function MovePlayer() {
   ) {
 
     console.log('y is true');
-    dungeon.position.y += player.vy;
+    player.position.y -= player.vy;
   }
 }
 
@@ -143,14 +148,9 @@ function animate() {
 
     if (player.shootingTimeout === gunTimeout) {
       player.shootingTimeout = 0;
-      shoot(rotateToPoint(renderer.plugins.interaction.mouse.global.x,
-        renderer.plugins.interaction.mouse.global.y,
-        player.position.x,
-        player.position.y),
-      {
-        x: player.position.x,
-        y: player.position.y
-      }
+      shoot(
+        renderer.plugins.interaction.mouse.global.x,
+        renderer.plugins.interaction.mouse.global.y
       );
     }
     ++player.shootingTimeout;
