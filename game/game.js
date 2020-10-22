@@ -84,6 +84,10 @@ class BulletPool {
           this.bulletPool[b].direction.x * this.speed;
         this.bulletPool[b].y +=
           this.bulletPool[b].direction.y * this.speed;
+
+        // moving accordingly to the dungeon move
+        this.bulletPool[b].x -= player.vx;
+        this.bulletPool[b].y += player.vy;
       }
     }
   }
@@ -113,20 +117,20 @@ function shoot(mX, mY) {
 function MovePlayer() {
   const playerCollisions = contain(player, dungeon);
 
-  // console.log('pW: ' + player.width + '; pH: ' + player.height +
-  //   '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
-  //   '; ppX: ' + player.position.x + '; ppY' + player.position.y +
-  //   '; pX: ' + player.x + '; pY: ' + player.y +
-  //   '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
-  //   '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
-  // );
+  console.log('pW: ' + player.width + '; pH: ' + player.height +
+    '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
+    '; ppX: ' + player.position.x + '; ppY' + player.position.y +
+    '; pX: ' + player.x + '; pY: ' + player.y +
+    '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
+    '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
+  );
 
   if (playerCollisions.x === collisionType.no ||
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
     console.log('x is true');
-    player.position.x += player.vx;
+    dungeon.position.x -= player.vx;
   }
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
@@ -134,7 +138,7 @@ function MovePlayer() {
   ) {
 
     console.log('y is true');
-    player.position.y -= player.vy;
+    dungeon.position.y += player.vy;
   }
 }
 
@@ -143,9 +147,9 @@ animate();
 function animate() {
 
   MovePlayer();
+  bulletPool.updateBulletsSpeed();
 
   if (player.shooting) {
-
     if (player.shootingTimeout === gunTimeout) {
       player.shootingTimeout = 0;
       shoot(
@@ -155,7 +159,6 @@ function animate() {
     }
     ++player.shootingTimeout;
   }
-  bulletPool.updateBulletsSpeed();
 
   // render the container
   renderer.render(stage);
