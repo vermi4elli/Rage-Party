@@ -11,8 +11,8 @@ const stage = new PIXI.Container();
 
 // create a background
 const dungeon = new PIXI.Sprite(mapTexture);
-dungeon.scale.x = 3;
-dungeon.scale.y = 3;
+dungeon.scale.x = 2.7;
+dungeon.scale.y = 2.7;
 stage.addChild(dungeon);
 
 
@@ -112,6 +112,13 @@ function shoot(mX, mY) {
   bullet.position.y = player.y;
   bullet.scale.x = 0.2;
   bullet.scale.y = 0.2;
+
+  ScreenShake(0.5);
+}
+
+function ScreenShake(shake) {
+  dungeon.position.x += shake;
+  dungeon.position.y += shake;
 }
 
 function MovePlayer() {

@@ -16,23 +16,23 @@ function contain(sprite, container) {
   };
 
   //Left
-  if (container.x > sprite.x) {
+  if (container.x >= sprite.x - 90) {
     collision.x = collisionType.left;
   }
 
   // Right
-  if (sprite.position.x + sprite.width >
+  if (sprite.position.x + sprite.width + 90 >=
     container.position.x + container.width) {
     collision.x = collisionType.right;
   }
 
   //Top
-  if (sprite.position.y < container.position.y) {
+  if (sprite.position.y - 90 + (sprite.height * 0.8) <= container.position.y) {
     collision.y = collisionType.top;
   }
 
   // Down
-  if (sprite.position.y + sprite.height >
+  if (sprite.position.y + sprite.height + 90 >=
     container.position.y + container.height) {
     collision.y = collisionType.down;
   }
