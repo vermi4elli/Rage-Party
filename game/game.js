@@ -84,10 +84,6 @@ class BulletPool {
           this.bulletPool[b].direction.x * this.speed;
         this.bulletPool[b].y +=
           this.bulletPool[b].direction.y * this.speed;
-
-        // moving accordingly to the dungeon move
-        this.bulletPool[b].x -= player.vx;
-        this.bulletPool[b].y += player.vy;
       }
     }
   }
@@ -113,7 +109,7 @@ function shoot(mX, mY) {
   bullet.scale.x = 0.2;
   bullet.scale.y = 0.2;
 
-  ScreenShake(0.5);
+  //ScreenShake(10);
 }
 
 function ScreenShake(shake) {
@@ -124,20 +120,12 @@ function ScreenShake(shake) {
 function MovePlayer() {
   const playerCollisions = contain(player, dungeon);
 
-  console.log('pW: ' + player.width + '; pH: ' + player.height +
-    '; dW: ' + dungeon.width + '; dH: ' + dungeon.height +
-    '; ppX: ' + player.position.x + '; ppY' + player.position.y +
-    '; pX: ' + player.x + '; pY: ' + player.y +
-    '; dpX: ' + dungeon.position.x + '; dpY' + dungeon.position.y +
-    '; dX: ' + dungeon.x + '; dY: ' + dungeon.y
-  );
-
   if (playerCollisions.x === collisionType.no ||
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
     console.log('x is true');
-    dungeon.position.x -= player.vx;
+    player.x += player.vx;
   }
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
@@ -145,7 +133,7 @@ function MovePlayer() {
   ) {
 
     console.log('y is true');
-    dungeon.position.y += player.vy;
+    player.y -= player.vy;
   }
 }
 
