@@ -1,6 +1,6 @@
 'use strict';
 
-const keyboard = value => {
+export const keyboard = value => {
   const key = {};
   key.value = value;
   key.isDown = false;
