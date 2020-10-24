@@ -1,7 +1,7 @@
 'use strict';
 
-import * as PIXI from 'pixi.js';
-import { keyboard } from './keyboard';
+// import * as PIXI from 'pixi.js';
+// import { keyboard } from './keyboard';
 
 const renderer =
   PIXI.autoDetectRenderer(window.innerWidth,
@@ -24,7 +24,7 @@ dungeon.scale.y = 2.7;
 stage.addChild(dungeon);
 
 // create a new Sprite using the texture
-export const player = new PIXI.Sprite(bunnyTexture);
+const player = new PIXI.Sprite(bunnyTexture);
 
 // move the sprite to the center of the screen
 player.position.x = renderer.width / 2;
