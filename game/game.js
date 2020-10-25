@@ -3,9 +3,10 @@
 // import { keyboard } from './keyboard';
 
 const renderer =
-  PIXI.autoDetectRenderer(window.innerWidth,
-    window.innerHeight,
-    { backgroundColor: 0x000000 });
+  PIXI.autoDetectRenderer({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    backgroundColor: 0x1a1f1b });
 document.body.appendChild(renderer.view);
 
 // create the root of the scene graph
@@ -17,8 +18,10 @@ const mapTexture = PIXI.Texture.fromImage('assets/levels/baseMap.png');
 
 // create a background
 const dungeon = new PIXI.Sprite(mapTexture);
-dungeon.scale.x = 2.7;
-dungeon.scale.y = 2.7;
+dungeon.scale.x = 2.5;
+dungeon.scale.y = 2.5;
+dungeon.position.x = (renderer.width - dungeon.width) / 2;
+dungeon.position.y = (renderer.height - dungeon.height) / 2;
 
 stage.addChild(dungeon);
 
@@ -62,13 +65,18 @@ stage.on('mouseup', _ => {
 
 // yet to make it modular
 class BulletPool {
-  constructor(texture, bulletAmount, bulletSpeed) {
+  constructor(texture, bulletAmount, bulletSpeed, reloadSpeed) {
     this.texture = texture;
+    this.bulletPool = [];
 
     this.active = false;
     this.amount = bulletAmount;
+    this.bulletsLeft = bulletAmount;
     this.speed = bulletSpeed;
-    this.bulletPool = [];
+
+    this.reloadSpeed = reloadSpeed;
+    this.isReloading = false;
+    this.reloadCooldown = reloadSpeed;
 
     for (let i = 0; i < bulletAmount; i++) {
       const bullet = new PIXI.Sprite(this.texture);
@@ -105,31 +113,46 @@ class BulletPool {
       }
     }
   }
+
+  shoot(mX, mY) {
+    if (!this.isReloading && this.bulletsLeft > 0) {
+      const bullet = this.next();
+      --this.bulletsLeft;
+
+      bullet.direction.x = mX - player.x;
+      bullet.direction.y = mY - player.y;
+
+      const length = Math.sqrt(
+        bullet.direction.x * bullet.direction.x +
+        bullet.direction.y * bullet.direction.y);
+      bullet.direction.x /= length;
+      bullet.direction.y /= length;
+
+      bullet.position.x = player.x + player.width / 5;
+      bullet.position.y = player.y + player.height / 3;
+      bullet.scale.x = 0.3;
+      bullet.scale.y = 0.3;
+
+      bullet.active = true;
+    } else if (this.isReloading && this.reloadCooldown > 0) {
+      --this.reloadCooldown;
+    } else if (this.isReloading && this.reloadCooldown === 0) {
+      this.isReloading = false;
+      this.bulletsLeft = this.amount;
+    }
+  }
+
+  reload() {
+    this.isReloading = true;
+    this.reloadCooldown = this.reloadSpeed;
+  }
+
 }
-const bulletSpeed = 10;
 const bulletAmount = 10;
-const bulletPool = new BulletPool(bulletTexture, bulletAmount, bulletSpeed);
-
-function shoot(mX, mY) {
-  const bullet = bulletPool.next();
-
-  bullet.direction.x = mX - player.x;
-  bullet.direction.y = mY - player.y;
-
-  const length = Math.sqrt(
-    bullet.direction.x * bullet.direction.x +
-    bullet.direction.y * bullet.direction.y);
-  bullet.direction.x /= length;
-  bullet.direction.y /= length;
-
-  bullet.position.x = player.x + player.width / 5;
-  bullet.position.y = player.y + player.height / 3;
-  bullet.scale.x = 0.3;
-  bullet.scale.y = 0.3;
-
-  bullet.active = true;
-  //ScreenShake(10);
-}
+const bulletSpeed = 10;
+const reloadSpeed = 8;
+const playerBulletPool =
+  new BulletPool(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed);
 
 function contain(sprite, container) {
 
@@ -216,7 +239,8 @@ const keyboard = value => {
 const left = keyboard('a'),
   up = keyboard('w'),
   right = keyboard('d'),
-  down = keyboard('s');
+  down = keyboard('s'),
+  reloadButton = keyboard('r');
 
 left.press = () => player.vx -= linearSpeed;
 left.release = () => player.vx += linearSpeed;
@@ -230,10 +254,7 @@ right.release = () => player.vx -= linearSpeed;
 down.press = () => player.vy -= linearSpeed;
 down.release = () => player.vy += linearSpeed;
 
-function ScreenShake(shake) {
-  dungeon.position.x += shake;
-  dungeon.position.y += shake;
-}
+reloadButton.press = () => playerBulletPool.reload();
 
 function MovePlayer() {
   const playerCollisions = contain(player, dungeon);
@@ -257,12 +278,12 @@ animate();
 function animate() {
 
   MovePlayer();
-  bulletPool.updateBulletsSpeed();
+  playerBulletPool.updateBulletsSpeed();
 
   if (player.shooting) {
     if (player.shootingTimeout === gunTimeout) {
       player.shootingTimeout = 0;
-      shoot(
+      playerBulletPool.shoot(
         renderer.plugins.interaction.mouse.global.x,
         renderer.plugins.interaction.mouse.global.y
       );
