@@ -1,5 +1,5 @@
 # Rage-Party      
-![build](https://github.com/vermi4elli/Rage-Party/workflows/build/badge.svg?branch=master) ![Heroku](https://pyheroku-badge.herokuapp.com/?app=rage-party&style=plastic)
+![build](https://github.com/vermi4elli/Rage-Party/workflows/build/badge.svg?branch=master)   ![Heroku](https://pyheroku-badge.herokuapp.com/?app=rage-party&style=plastic)
 ## Description
 **Rage Party** is an online sandbox 2d third-person-shooter with coop and pvp possibilities. Players can co-op in endless mode of enemy waves or compete against each other. The rating system shows the total rating of players.
 ## Main Functionality
