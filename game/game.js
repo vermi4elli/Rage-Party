@@ -22,10 +22,10 @@ renderer.plugins.interaction.cursorStyles.default = defaultIcon;
 
 // create a background
 const dungeon = new PIXI.Sprite(mapTexture);
-dungeon.scale.x = 2.5;
-dungeon.scale.y = 2.5;
-dungeon.position.x = (renderer.width - dungeon.width) / 2;
-dungeon.position.y = (renderer.height - dungeon.height) / 2;
+dungeon.scale.x = 2.7;
+dungeon.scale.y = 2.7;
+dungeon.position.x = 0;
+dungeon.position.y = 0;
 
 stage.addChild(dungeon);
 
@@ -278,6 +278,7 @@ function MovePlayer() {
 }
 
 // start animating
+ScaleToWindow(renderer.view);
 animate();
 function animate() {
 
@@ -297,6 +298,18 @@ function animate() {
 
   // render the container
   renderer.render(stage);
+
+
+  /*
+  * dungeon.position.x = (renderer.width - dungeon.width) / 2;
+  * dungeon.position.y = (renderer.height - dungeon.height) / 2;
+  * */
+  console.log('renderer.width: ' + renderer.width +
+    '; renderer.height: ' + renderer.height +
+    '; dungeon.width: ' + dungeon.width +
+    '; dungeon.height: ' + dungeon.height +
+    '; result X: ' + (renderer.width - dungeon.width) / 2 +
+    '; result Y: ' + (renderer.height - dungeon.height) / 2);
 
   requestAnimationFrame(animate);
 }

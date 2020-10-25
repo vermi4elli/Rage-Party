@@ -1,7 +1,8 @@
 {
   "globals": {
     "PIXI": true,
-    "ScaleToWindow": true
+    "ScaleToWindow": true,
+    "renderer": true
   },
   "rules": {
     "no-unused-vars": [
