@@ -36,12 +36,14 @@ player.shooting = false;
 
 player.shootingTimeout = gunTimeout;
 
-// background.beginFill(0x123456);
-// background.drawRect(0, 0, 800, 600);
-// background.endFill();
-// const background = new PIXI.Graphics();
+const collisionType = {
+  no: 0,
+  top: 1,
+  right: 2,
+  down: 3,
+  left: 4
+};
 
-// stage.addChild(background);
 stage.addChild(player);
 
 stage.interactive = true;
@@ -86,10 +88,17 @@ class BulletPool {
   updateBulletsSpeed() {
     if (this.active) {
       for (let b = this.bulletPool.length - 1; b >= 0; b--) {
-        this.bulletPool[b].x +=
-          this.bulletPool[b].direction.x * this.speed;
-        this.bulletPool[b].y +=
-          this.bulletPool[b].direction.y * this.speed;
+        if (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
+            contain(this.bulletPool[b], dungeon).y !== collisionType.no) {
+          this.bulletPool[b].active = false;
+          this.bulletPool[b].visible = false;
+        }
+        if (this.bulletPool[b].active) {
+          this.bulletPool[b].x +=
+            this.bulletPool[b].direction.x * this.speed;
+          this.bulletPool[b].y +=
+            this.bulletPool[b].direction.y * this.speed;
+        }
       }
     }
   }
@@ -115,16 +124,9 @@ function shoot(mX, mY) {
   bullet.scale.x = 0.2;
   bullet.scale.y = 0.2;
 
+  bullet.active = true;
   //ScreenShake(10);
 }
-
-const collisionType = {
-  no: 0,
-  top: 1,
-  right: 2,
-  down: 3,
-  left: 4
-};
 
 function contain(sprite, container) {
 
@@ -237,15 +239,12 @@ function MovePlayer() {
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
-    console.log('x is true');
     player.x += player.vx;
   }
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
     ((playerCollisions.y === collisionType.down) && (player.vy >= 0))
   ) {
-
-    console.log('y is true');
     player.y -= player.vy;
   }
 }
