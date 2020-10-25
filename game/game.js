@@ -28,9 +28,12 @@ const player = new PIXI.Sprite(bunnyTexture);
 // move the sprite to the center of the screen
 player.position.x = renderer.width / 2;
 player.position.y = renderer.height / 2;
-player.vx = 0;
 
+player.vx = 0;
 player.vy = 0;
+player.scale.x = 1.5;
+player.scale.y = 1.5;
+
 const gunTimeout = 10;
 player.shooting = false;
 
@@ -119,10 +122,10 @@ function shoot(mX, mY) {
   bullet.direction.x /= length;
   bullet.direction.y /= length;
 
-  bullet.position.x = player.x;
-  bullet.position.y = player.y;
-  bullet.scale.x = 0.2;
-  bullet.scale.y = 0.2;
+  bullet.position.x = player.x + player.width / 5;
+  bullet.position.y = player.y + player.height / 3;
+  bullet.scale.x = 0.3;
+  bullet.scale.y = 0.3;
 
   bullet.active = true;
   //ScreenShake(10);
@@ -136,18 +139,18 @@ function contain(sprite, container) {
   };
 
   //Left
-  if (container.x >= sprite.x - 90) {
+  if (container.x >= sprite.x - 95) {
     collision.x = collisionType.left;
   }
 
   // Right
-  if (sprite.position.x + sprite.width + 90 >=
+  if (sprite.position.x + sprite.width + 95 >=
     container.position.x + container.width) {
     collision.x = collisionType.right;
   }
 
   //Top
-  if (sprite.position.y - 90 + (sprite.height * 0.8) <= container.position.y) {
+  if (sprite.position.y - 90 + (sprite.height * 0.5) <= container.position.y) {
     collision.y = collisionType.top;
   }
 
