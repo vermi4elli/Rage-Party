@@ -16,6 +16,12 @@ const bunnyTexture = PIXI.Texture.fromImage('assets/bunny.png');
 const bulletTexture = PIXI.Texture.fromImage('assets/bullet.png');
 const mapTexture = PIXI.Texture.fromImage('assets/levels/baseMap.png');
 const defaultIcon = 'url(\'./assets/utils/crosshair.cur\'),auto';
+const explosionTextures = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/explo_orange/explo_orange_' + i + '.png');
+  explosionTextures.push(texture);
+}
 
 // Add custom cursor styles
 renderer.plugins.interaction.cursorStyles.default = defaultIcon;
@@ -103,10 +109,25 @@ class BulletPool {
   updateBulletsSpeed() {
     if (this.active) {
       for (let b = this.bulletPool.length - 1; b >= 0; b--) {
-        if (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
-            contain(this.bulletPool[b], dungeon).y !== collisionType.no) {
-          this.bulletPool[b].active = false;
+        if (this.bulletPool[b].active &&
+          (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
+            contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
           this.bulletPool[b].visible = false;
+
+          const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
+
+          explosion.x = this.bulletPool[b].x;
+          explosion.y = this.bulletPool[b].y;
+          explosion.anchor.set(0.5);
+          explosion.rotation = Math.random() * Math.PI;
+          explosion.scale.set(0.2 + Math.random() * 0.2);
+          explosion.loop = false;
+          explosion.animationSpeed = 0.5;
+          explosion.play();
+          explosion.onComplete = () => stage.removeChild(explosion);
+          stage.addChild(explosion);
+
+          this.bulletPool[b].active = false;
         }
         if (this.bulletPool[b].active) {
           this.bulletPool[b].x +=
@@ -298,18 +319,6 @@ function animate() {
 
   // render the container
   renderer.render(stage);
-
-
-  /*
-  * dungeon.position.x = (renderer.width - dungeon.width) / 2;
-  * dungeon.position.y = (renderer.height - dungeon.height) / 2;
-  * */
-  console.log('renderer.width: ' + renderer.width +
-    '; renderer.height: ' + renderer.height +
-    '; dungeon.width: ' + dungeon.width +
-    '; dungeon.height: ' + dungeon.height +
-    '; result X: ' + (renderer.width - dungeon.width) / 2 +
-    '; result Y: ' + (renderer.height - dungeon.height) / 2);
 
   requestAnimationFrame(animate);
 }
