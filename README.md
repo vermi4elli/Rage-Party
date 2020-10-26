@@ -11,9 +11,6 @@
   - [ ] delete their account and user information;
 - [ ] Players can choose which game mode to play;
 
-## Functionality Details
-- [ ] The pointer locks in the game fields borders;
-
 ## Technologies
 
 ### Frontend
