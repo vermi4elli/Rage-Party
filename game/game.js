@@ -6,11 +6,14 @@ const renderer =
   PIXI.autoDetectRenderer({
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: 0x1a1f1b });
+    backgroundColor: 0x1a1f1b,
+    autoDensity: true
+  });
 document.body.appendChild(renderer.view);
 
 // create the root of the scene graph
-const stage = new PIXI.Container();
+const stageLevel = new PIXI.Container();
+const stageMenu = new PIXI.Container();
 
 const bunnyTexture = PIXI.Texture.fromImage('assets/bunny.png');
 const bulletTexture = PIXI.Texture.fromImage('assets/bullet.png');
@@ -22,18 +25,17 @@ for (let i = 1; i <= 6; i++) {
     './assets/explo_orange/explo_orange_' + i + '.png');
   explosionTextures.push(texture);
 }
-
 // Add custom cursor styles
 renderer.plugins.interaction.cursorStyles.default = defaultIcon;
 
 // create a background
 const dungeon = new PIXI.Sprite(mapTexture);
+
 dungeon.scale.x = 2.7;
 dungeon.scale.y = 2.7;
 dungeon.position.x = 0;
 dungeon.position.y = 0;
-
-stage.addChild(dungeon);
+stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
 const player = new PIXI.Sprite(bunnyTexture);
@@ -60,15 +62,15 @@ const collisionType = {
   left: 4
 };
 
-stage.addChild(player);
+stageLevel.addChild(player);
 
-stage.interactive = true;
+stageLevel.interactive = true;
 
-stage.on('mousedown', _ => {
+stageLevel.on('mousedown', _ => {
   player.shooting = true;
 });
 
-stage.on('mouseup', _ => {
+stageLevel.on('mouseup', _ => {
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
 });
@@ -94,7 +96,7 @@ class BulletPool {
 
       bullet.direction = new PIXI.Point(0, 0);
       this.bulletPool.push(bullet);
-      stage.addChild(bullet);
+      stageLevel.addChild(bullet);
     }
   }
 
@@ -124,8 +126,8 @@ class BulletPool {
           explosion.loop = false;
           explosion.animationSpeed = 0.5;
           explosion.play();
-          explosion.onComplete = () => stage.removeChild(explosion);
-          stage.addChild(explosion);
+          explosion.onComplete = () => stageLevel.removeChild(explosion);
+          stageLevel.addChild(explosion);
 
           this.bulletPool[b].active = false;
         }
@@ -223,7 +225,7 @@ const keyboard = value => {
   key.release = undefined;
   //The `downHandler`
   key.downHandler = event => {
-    if (event.key === key.value) {
+    if (event.code === key.value) {
       if (key.isUp && key.press) key.press();
       key.isDown = true;
       key.isUp = false;
@@ -233,7 +235,7 @@ const keyboard = value => {
 
   //The `upHandler`
   key.upHandler = event => {
-    if (event.key === key.value) {
+    if (event.code === key.value) {
       if (key.isDown && key.release) key.release();
       key.isDown = false;
       key.isUp = true;
@@ -261,11 +263,11 @@ const keyboard = value => {
   return key;
 };
 
-const left = keyboard('a'),
-  up = keyboard('w'),
-  right = keyboard('d'),
-  down = keyboard('s'),
-  reloadButton = keyboard('r');
+const left = keyboard('KeyA'),
+  up = keyboard('KeyW'),
+  right = keyboard('KeyD'),
+  down = keyboard('KeyS'),
+  reloadButton = keyboard('KeyR');
 
 left.press = () => player.vx -= linearSpeed;
 left.release = () => player.vx += linearSpeed;
@@ -302,7 +304,6 @@ function MovePlayer() {
 ScaleToWindow(renderer.view);
 animate();
 function animate() {
-
   MovePlayer();
   playerBulletPool.updateBulletsSpeed();
 
@@ -318,7 +319,7 @@ function animate() {
   }
 
   // render the container
-  renderer.render(stage);
+  renderer.render(stageLevel);
 
   requestAnimationFrame(animate);
 }
