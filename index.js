@@ -7,17 +7,15 @@ const port = process.env.PORT || 80;
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
   default: '/'
-  //prefix: '/public/', // optional:
 });
-
-// fastify.get('/', (req, reply) => {
-//   // serving path.join(__dirname, 'public', 'myHtml.html') directly
-//   reply.sendFile('index.html');
-// });
 
 // Declare a route
 fastify.get('/', async (request, reply) =>
   (reply.sendFile('index.html')));
+
+fastify.get('/register', async (request, reply) => {
+  reply.send({ a: 'hello' });
+});
 
 // Run the server!
 const start = async () => {
