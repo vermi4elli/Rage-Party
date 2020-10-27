@@ -104,7 +104,8 @@ class BulletPool {
     for (let i = 0; i < bulletAmount; i++) {
       const bullet = new PIXI.Sprite(this.texture);
       bullet.visible = false;
-
+      bullet.scale.x = 1.5;
+      bullet.scale.y = 1.5;
       bullet.direction = new PIXI.Point(0, 0);
       this.bulletPool.push(bullet);
       stageLevel.addChild(bullet);
@@ -170,8 +171,6 @@ class BulletPool {
 
       bullet.position.x = player.x + player.width / 5;
       bullet.position.y = player.y + player.height / 3;
-      bullet.scale.x = 0.3;
-      bullet.scale.y = 0.3;
 
       bullet.active = true;
     } else if (this.isReloading && this.reloadCooldown > 0) {
