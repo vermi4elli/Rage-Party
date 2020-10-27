@@ -25,31 +25,41 @@ for (let i = 1; i <= 6; i++) {
     './assets/explo_orange/explo_orange_' + i + '.png');
   explosionTextures.push(texture);
 }
+const ammoLeftStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 40,
+  stroke: 'white'
+});
+const ammoLeftText = new PIXI.Text('12 / 12', ammoLeftStyle);
+ammoLeftText.x = renderer.width / 10 * 9;
+ammoLeftText.y = renderer.height / 7 * 6;
+
 // Add custom cursor styles
 renderer.plugins.interaction.cursorStyles.default = defaultIcon;
 
 // create a background
 const dungeon = new PIXI.Sprite(mapTexture);
-
 dungeon.scale.x = 2.7;
 dungeon.scale.y = 2.7;
 dungeon.position.x = 0;
 dungeon.position.y = 0;
+
 stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
 const player = new PIXI.Sprite(bunnyTexture);
-
 // move the sprite to the center of the screen
 player.position.x = renderer.width / 2;
-player.position.y = renderer.height / 2;
 
+player.position.y = renderer.height / 2;
 player.vx = 0;
 player.vy = 0;
 player.scale.x = 1.5;
-player.scale.y = 1.5;
 
+player.scale.y = 1.5;
 const gunTimeout = 10;
+
 player.shooting = false;
 
 player.shootingTimeout = gunTimeout;
@@ -74,7 +84,6 @@ stageLevel.on('mouseup', _ => {
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
 });
-
 // yet to make it modular
 class BulletPool {
   constructor(texture, bulletAmount, bulletSpeed, reloadSpeed) {
@@ -85,6 +94,8 @@ class BulletPool {
     this.amount = bulletAmount;
     this.bulletsLeft = bulletAmount;
     this.speed = bulletSpeed;
+
+    ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
 
     this.reloadSpeed = reloadSpeed;
     this.isReloading = false;
@@ -146,6 +157,8 @@ class BulletPool {
       const bullet = this.next();
       --this.bulletsLeft;
 
+      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+
       bullet.direction.x = mX - player.x;
       bullet.direction.y = mY - player.y;
 
@@ -166,6 +179,7 @@ class BulletPool {
     } else if (this.isReloading && this.reloadCooldown === 0) {
       this.isReloading = false;
       this.bulletsLeft = this.amount;
+      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
     }
   }
 
@@ -178,6 +192,7 @@ class BulletPool {
 const bulletAmount = 10;
 const bulletSpeed = 10;
 const reloadSpeed = 8;
+
 const playerBulletPool =
   new BulletPool(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed);
 
@@ -299,6 +314,8 @@ function MovePlayer() {
     player.y -= player.vy;
   }
 }
+
+stageLevel.addChild(ammoLeftText);
 
 // start animating
 ScaleToWindow(renderer.view);
