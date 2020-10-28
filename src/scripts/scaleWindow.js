@@ -1,6 +1,4 @@
-'use strict';
-
-function ScaleToWindow(canvas, backgroundColor) {
+export function ScaleToWindow(canvas, backgroundColor) {
   let center;
 
   //1. Scale the canvas to the correct size
@@ -76,7 +74,3 @@ function ScaleToWindow(canvas, backgroundColor) {
   //for correct hit testing between the pointer and sprites
   return scale;
 }
-
-window.addEventListener('resize', _ => {
-  ScaleToWindow(renderer.view);
-});
