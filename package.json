@@ -8,7 +8,6 @@
     "start": "npm run clean && webpack --config webpack.common.js && node index.js",
     "build": "webpack --config webpack.prod.js",
     "prod": "node index.js",
-    "heroku-postbuild": "webpack -p",
     "test": "echo \"Here will be tests!\"",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
   },
