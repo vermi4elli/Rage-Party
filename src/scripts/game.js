@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { ScaleToWindow } from './scaleWindow';
 import { keyboard } from './keyboard';
+import { collisionType, contain } from './contain';
 
 const renderer =
   PIXI.autoDetectRenderer({
@@ -67,14 +68,6 @@ const gunTimeout = 10;
 player.shooting = false;
 
 player.shootingTimeout = gunTimeout;
-
-const collisionType = {
-  no: 0,
-  top: 1,
-  right: 2,
-  down: 3,
-  left: 4
-};
 
 stageLevel.addChild(player);
 
@@ -155,6 +148,14 @@ class BulletPool {
         }
       }
     }
+
+    if (this.isReloading && this.reloadCooldown > 0) {
+      --this.reloadCooldown;
+    } else if (this.isReloading && this.reloadCooldown === 0) {
+      this.isReloading = false;
+      this.bulletsLeft = this.amount;
+      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+    }
   }
 
   shoot(mX, mY) {
@@ -177,12 +178,6 @@ class BulletPool {
       bullet.position.y = player.y + player.height / 3;
 
       bullet.active = true;
-    } else if (this.isReloading && this.reloadCooldown > 0) {
-      --this.reloadCooldown;
-    } else if (this.isReloading && this.reloadCooldown === 0) {
-      this.isReloading = false;
-      this.bulletsLeft = this.amount;
-      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
     }
   }
 
@@ -194,42 +189,10 @@ class BulletPool {
 }
 const bulletAmount = 10;
 const bulletSpeed = 8;
-const reloadSpeed = 8;
+const reloadSpeed = 80;
 
 const playerBulletPool =
   new BulletPool(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed);
-
-function contain(sprite, container) {
-
-  const collision = {
-    x: collisionType.no,
-    y: collisionType.no
-  };
-
-  //Left
-  if (container.x >= sprite.x - 95) {
-    collision.x = collisionType.left;
-  }
-
-  // Right
-  if (sprite.position.x + sprite.width + 95 >=
-    container.position.x + container.width) {
-    collision.x = collisionType.right;
-  }
-
-  //Top
-  if (sprite.position.y - 90 + (sprite.height * 0.5) <= container.position.y) {
-    collision.y = collisionType.top;
-  }
-
-  // Down
-  if (sprite.position.y + sprite.height + 90 >=
-    container.position.y + container.height) {
-    collision.y = collisionType.down;
-  }
-
-  return collision;
-}
 
 // character control
 const linearSpeed = 7;
@@ -254,20 +217,20 @@ down.release = () => player.vy += linearSpeed;
 
 reloadButton.press = () => playerBulletPool.reload();
 
-function MovePlayer() {
-  const playerCollisions = contain(player, dungeon);
+function MoveCreature(creature) {
+  const playerCollisions = contain(creature, dungeon);
 
   if (playerCollisions.x === collisionType.no ||
     ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
     ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
   ) {
-    player.x += player.vx;
+    creature.x += creature.vx;
   }
   if (playerCollisions.y === collisionType.no ||
     ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
     ((playerCollisions.y === collisionType.down) && (player.vy >= 0))
   ) {
-    player.y -= player.vy;
+    creature.y -= creature.vy;
   }
 }
 
@@ -277,7 +240,7 @@ stageLevel.addChild(ammoLeftText);
 ScaleToWindow(renderer.view);
 animate();
 function animate() {
-  MovePlayer();
+  MoveCreature(player);
   playerBulletPool.updateBulletsSpeed();
 
   if (player.shooting) {

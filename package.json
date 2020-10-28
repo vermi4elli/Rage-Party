@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "start": "npm run clean && webpack --config webpack.common.js && node index.js",
-    "build": "npm run clean && webpack --config webpack.prod.js",
+    "build": "webpack --config webpack.prod.js",
     "prod": "node index.js",
     "test": "echo \"Here will be tests!\"",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
