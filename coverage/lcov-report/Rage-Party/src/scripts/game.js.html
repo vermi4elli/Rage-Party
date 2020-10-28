@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/159</span>
+                <span class='fraction'>0/163</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/39</span>
+                <span class='fraction'>0/43</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/146</span>
+                <span class='fraction'>0/150</span>
             </div>
         
             
@@ -331,7 +331,10 @@
 <a name='L272'></a><a href='#L272'>272</a>
 <a name='L273'></a><a href='#L273'>273</a>
 <a name='L274'></a><a href='#L274'>274</a>
-<a name='L275'></a><a href='#L275'>275</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -498,6 +501,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -521,15 +526,15 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -580,6 +585,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -767,11 +773,13 @@ class BulletPool {
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (this.isReloading &amp;&amp; this.reloadCooldown &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      reloadText.text = 'WAIT';</span>
 <span class="cstat-no" title="statement not covered" >      --this.reloadCooldown;</span>
     } else <span class="cstat-no" title="statement not covered" >if (this.isReloading &amp;&amp; this.reloadCooldown === 0) {</span>
 <span class="cstat-no" title="statement not covered" >      this.isReloading = false;</span>
 <span class="cstat-no" title="statement not covered" >      this.bulletsLeft = this.amount;</span>
 <span class="cstat-no" title="statement not covered" >      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;</span>
+<span class="cstat-no" title="statement not covered" >      reloadText.visible = false;</span>
     }
   }
 &nbsp;
@@ -795,13 +803,13 @@ class BulletPool {
 <span class="cstat-no" title="statement not covered" >      bullet.position.y = player.y + player.height / 3;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      bullet.active = true;</span>
-    } else {
+    } else <span class="cstat-no" title="statement not covered" >if (!this.isReloading &amp;&amp; this.bulletsLeft === 0) {</span>
+<span class="cstat-no" title="statement not covered" >      reloadText.text = 'PRESS \'R\' TO RELOAD';</span>
 <span class="cstat-no" title="statement not covered" >      reloadText.visible = true;</span>
     }
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  re</span>load() {
-<span class="cstat-no" title="statement not covered" >    reloadText.visible = false;</span>
 <span class="cstat-no" title="statement not covered" >    this.isReloading = true;</span>
 <span class="cstat-no" title="statement not covered" >    this.reloadCooldown = this.reloadSpeed;</span>
   }
@@ -855,6 +863,7 @@ function <span class="fstat-no" title="function not covered" >MoveCreature(</spa
 }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >stageLevel.addChild(ammoLeftText);</span>
+<span class="cstat-no" title="statement not covered" >stageLevel.addChild(reloadText);</span>
 &nbsp;
 // start animating
 <span class="cstat-no" title="statement not covered" >ScaleToWindow(renderer.view);</span>
@@ -886,7 +895,7 @@ function <span class="fstat-no" title="function not covered" >animate(</span>) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Thu Oct 29 2020 01:14:12 GMT+0200 (Восточная Европа, стандартное время)
+                at Thu Oct 29 2020 01:40:01 GMT+0200 (Восточная Европа, стандартное время)
             </div>
         </div>
         <script src="../../../prettify.js"></script>
