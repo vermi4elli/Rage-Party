@@ -2,7 +2,8 @@
 
 const fastify = require('fastify')({ logger: true });
 const path = require('path');
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3000;
+const host = port === 3000 ? '127.0.0.1' : '0.0.0.0';
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
@@ -20,7 +21,7 @@ fastify.get('/register', async (request, reply) => {
 // Run the server!
 const start = async () => {
   try {
-    await fastify.listen(port, '0.0.0.0');
+    await fastify.listen(port, host);
     fastify.log.info(`server listening on ${fastify.server.address().port}`);
   } catch (err) {
     fastify.log.error(err);
