@@ -6,9 +6,9 @@ const renderer =
     width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: 0x1a1f1b,
-    autoDensity: true,
-    view: document.querySelector('#scene')
+    autoDensity: true
   });
+document.body.appendChild(renderer.view);
 
 window.addEventListener('resize', _ => {
   ScaleToWindow(renderer.view);
