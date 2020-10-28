@@ -1,23 +1,26 @@
-'use strict';
-
-// import { keyboard } from './keyboard';
+import * as PIXI from 'pixi.js';
+import { ScaleToWindow } from './scaleWindow';
 
 const renderer =
   PIXI.autoDetectRenderer({
     width: window.innerWidth,
     height: window.innerHeight,
     backgroundColor: 0x1a1f1b,
-    autoDensity: true
+    autoDensity: true,
+    view: document.querySelector('#scene')
   });
-document.body.appendChild(renderer.view);
+
+window.addEventListener('resize', _ => {
+  ScaleToWindow(renderer.view);
+});
 
 // create the root of the scene graph
 const stageLevel = new PIXI.Container();
-const stageMenu = new PIXI.Container();
+// const stageMenu = new PIXI.Container();
 
-const bunnyTexture = PIXI.Texture.fromImage('assets/bunny.png');
-const bulletTexture = PIXI.Texture.fromImage('assets/bullet.png');
-const mapTexture = PIXI.Texture.fromImage('assets/levels/baseMap.png');
+const bunnyTexture = PIXI.Texture.from('assets/bunny.png');
+const bulletTexture = PIXI.Texture.from('assets/bullet.png');
+const mapTexture = PIXI.Texture.from('assets/levels/baseMap.png');
 const defaultIcon = 'url(\'./assets/utils/crosshair.cur\'),auto';
 const explosionTextures = [];
 for (let i = 1; i <= 6; i++) {
@@ -128,7 +131,7 @@ class BulletPool {
             contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
           this.bulletPool[b].visible = false;
 
-          const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
+          const explosion = new PIXI.AnimatedSprite(explosionTextures);
 
           explosion.x = this.bulletPool[b].x;
           explosion.y = this.bulletPool[b].y;
@@ -189,7 +192,7 @@ class BulletPool {
 
 }
 const bulletAmount = 10;
-const bulletSpeed = 10;
+const bulletSpeed = 8;
 const reloadSpeed = 8;
 
 const playerBulletPool =
