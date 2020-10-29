@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { ScaleToWindow } from './scaleWindow';
-import { keyboard } from './keyboard';
+import { left, right, down, up, reloadButton } from './keyboard';
 import { collisionType, contain } from './contain';
 
 const renderer =
@@ -211,12 +211,6 @@ const playerBulletPool =
 
 // character control
 const linearSpeed = 7;
-
-const left = keyboard('KeyA'),
-  up = keyboard('KeyW'),
-  right = keyboard('KeyD'),
-  down = keyboard('KeyS'),
-  reloadButton = keyboard('KeyR');
 
 left.press = () => player.vx -= linearSpeed;
 left.release = () => player.vx += linearSpeed;

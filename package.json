@@ -29,16 +29,6 @@
   },
   "homepage": "https://github.com/vermi4elli/Rage-Party#readme",
   "jest": {
-    "presets": [
-      [
-        "@babel/preset-env",
-        {
-          "targets": {
-            "node": "current"
-          }
-        }
-      ]
-    ],
     "collectCoverage": true,
     "collectCoverageFrom": [
       "./src/scripts/*.js",
