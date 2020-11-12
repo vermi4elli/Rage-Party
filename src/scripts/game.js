@@ -75,9 +75,19 @@ const ammoLeftStyle = new PIXI.TextStyle({
   fontSize: 40,
   stroke: 'white'
 });
+const reloadStyle = new PIXI.TextStyle({
+  fill: 'red',
+  fontFamily: 'Impact',
+  fontSize: 40,
+  stroke: 'white'
+});
 const ammoLeftText = new PIXI.Text('12 / 12', ammoLeftStyle);
 ammoLeftText.x = renderer.width / 10 * 9;
 ammoLeftText.y = renderer.height / 7 * 6;
+const reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
+reloadText.x = renderer.width / 10 * 5;
+reloadText.y = renderer.height / 7 * 6;
+reloadText.visible = false;
 
 // Add custom cursor styles
 renderer.plugins.interaction.cursorStyles.default = defaultIcon;
@@ -149,6 +159,8 @@ class BulletPool {
 
     for (let i = 0; i < bulletAmount; i++) {
       const bullet = new PIXI.Sprite(this.texture);
+      bullet.position.x = 0;
+      bullet.position.y = 0;
       bullet.visible = false;
       bullet.scale.x = 1.5;
       bullet.scale.y = 1.5;
@@ -156,6 +168,18 @@ class BulletPool {
       this.bulletPool.push(bullet);
       stageLevel.addChild(bullet);
     }
+  }
+
+  getBulletsLeft() {
+    return this.bulletsLeft;
+  }
+
+  getBulletsAmount() {
+    return this.amount;
+  }
+
+  getReloadSpeed() {
+    return this.reloadSpeed;
   }
 
   next() {
@@ -172,6 +196,8 @@ class BulletPool {
         if (this.bulletPool[b].active &&
           (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
             contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
+          console.log('x col: ' + contain(this.bulletPool[b], dungeon).x +
+            '; y col: ' + contain(this.bulletPool[b], dungeon).y);
           this.bulletPool[b].visible = false;
 
           const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
@@ -197,13 +223,14 @@ class BulletPool {
         }
       }
     }
-
     if (this.isReloading && this.reloadCooldown > 0) {
+      reloadText.text = 'WAIT';
       --this.reloadCooldown;
     } else if (this.isReloading && this.reloadCooldown === 0) {
       this.isReloading = false;
       this.bulletsLeft = this.amount;
       ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+      reloadText.visible = false;
     }
   }
 
@@ -227,6 +254,9 @@ class BulletPool {
       bullet.position.y = player.y + player.height / 3;
 
       bullet.active = true;
+    } else if (!this.isReloading && this.bulletsLeft === 0) {
+      reloadText.text = 'PRESS \'R\' TO RELOAD';
+      reloadText.visible = true;
     }
   }
 
@@ -342,6 +372,7 @@ function AnimatePlayer(mouseX) {
 }
 
 stageLevel.addChild(ammoLeftText);
+stageLevel.addChild(reloadText);
 
 // start animating
 //ScaleToWindow(renderer.view);
