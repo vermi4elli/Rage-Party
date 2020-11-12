@@ -360,6 +360,7 @@ function animate() {
     }
     ++player.shootingTimeout;
   }
+  AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
 
   // render the container
   renderer.render(stageLevel);
