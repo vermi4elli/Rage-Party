@@ -34,7 +34,10 @@
       "./src/scripts/*.js",
       "./index.js"
     ],
-    "coverageDirectory": "./coverage/"
+    "coverageDirectory": "./coverage/",
+    "setupFiles": [
+      "jest-canvas-mock"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
@@ -47,6 +50,7 @@
     "html-webpack-plugin": "^4.5.0",
     "imagemin-webpack-plugin": "^2.4.2",
     "jest": "^26.6.1",
+    "jest-canvas-mock": "^2.3.0",
     "rimraf": "^3.0.2",
     "webpack": "^5.3.0",
     "webpack-cli": "^3.3.12",
@@ -58,6 +62,6 @@
     "core-js": "^3.6.5",
     "fastify": "^3.5.1",
     "fastify-static": "^3.2.1",
-    "pixi.js": "^5.3.3"
+    "pixi.js": "^4.8.9"
   }
 }

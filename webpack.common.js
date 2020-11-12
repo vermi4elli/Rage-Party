@@ -12,5 +12,8 @@ module.exports = {
     publicPath: '/',
     filename: 'game.min.js'
   },
-  target: 'web'
+  target: 'web',
+  resolve: {
+    fallback: { 'path': false }
+  }
 };

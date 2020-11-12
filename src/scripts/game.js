@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { ScaleToWindow } from './scaleWindow';
+import { ScaleToWindow } from '../other/scaleWindow';
 import { left, right, down, up, reloadButton } from './keyboard';
 import { collisionType, contain } from './contain';
 
@@ -13,6 +13,7 @@ const renderer =
 document.body.appendChild(renderer.view);
 
 window.addEventListener('resize', _ => {
+  console.log('resizing...');
   ScaleToWindow(renderer.view);
 });
 
@@ -20,7 +21,6 @@ window.addEventListener('resize', _ => {
 const stageLevel = new PIXI.Container();
 // const stageMenu = new PIXI.Container();
 
-const bunnyTexture = PIXI.Texture.from('assets/bunny.png');
 const bulletTexture = PIXI.Texture.from('assets/bullet.png');
 const mapTexture = PIXI.Texture.from('assets/levels/baseMap.png');
 const defaultIcon = 'url(\'./assets/utils/crosshair.cur\'),auto';
@@ -30,6 +30,27 @@ for (let i = 1; i <= 6; i++) {
     './assets/explo_orange/explo_orange_' + i + '.png');
   explosionTextures.push(texture);
 }
+const playerRunLeft = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runLeft/hero ' + i + '.png');
+  playerRunLeft.push(texture);
+}
+const playerRunRight = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runRight/hero ' + i + '.png');
+  playerRunRight.push(texture);
+}
+const playerStaleLeft = PIXI.Texture.from(
+  './assets/hero/runLeft/hero 6.png');
+const playerStaleRight = PIXI.Texture.from(
+  './assets/hero/runRight/hero 6.png');
+const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
+  playerRunningRight = new PIXI.extras.AnimatedSprite(playerRunRight);
+playerRunningLeft.loop = true;
+playerRunningRight.loop = true;
+
 const ammoLeftStyle = new PIXI.TextStyle({
   fill: 'white',
   fontFamily: 'Impact',
@@ -63,30 +84,25 @@ dungeon.position.y = 0;
 stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
-const player = new PIXI.Sprite(bunnyTexture);
+let player = new PIXI.Sprite(playerStaleRight);
 // move the sprite to the center of the screen
 player.position.x = renderer.width / 2;
-
 player.position.y = renderer.height / 2;
 player.vx = 0;
 player.vy = 0;
+player.lastMouseHalf = 2;
 player.scale.x = 1.5;
-
 player.scale.y = 1.5;
+
 const gunTimeout = 10;
-
 player.shooting = false;
-
 player.shootingTimeout = gunTimeout;
 
 stageLevel.addChild(player);
-
 stageLevel.interactive = true;
-
 stageLevel.on('mousedown', _ => {
   player.shooting = true;
 });
-
 stageLevel.on('mouseup', _ => {
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
@@ -110,6 +126,8 @@ class BulletPool {
 
     for (let i = 0; i < bulletAmount; i++) {
       const bullet = new PIXI.Sprite(this.texture);
+      bullet.position.x = 0;
+      bullet.position.y = 0;
       bullet.visible = false;
       bullet.scale.x = 1.5;
       bullet.scale.y = 1.5;
@@ -117,6 +135,18 @@ class BulletPool {
       this.bulletPool.push(bullet);
       stageLevel.addChild(bullet);
     }
+  }
+
+  getBulletsLeft() {
+    return this.bulletsLeft;
+  }
+
+  getBulletsAmount() {
+    return this.amount;
+  }
+
+  getReloadSpeed() {
+    return this.reloadSpeed;
   }
 
   next() {
@@ -133,9 +163,11 @@ class BulletPool {
         if (this.bulletPool[b].active &&
           (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
             contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
+          console.log('x col: ' + contain(this.bulletPool[b], dungeon).x +
+            '; y col: ' + contain(this.bulletPool[b], dungeon).y);
           this.bulletPool[b].visible = false;
 
-          const explosion = new PIXI.AnimatedSprite(explosionTextures);
+          const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
 
           explosion.x = this.bulletPool[b].x;
           explosion.y = this.bulletPool[b].y;
@@ -158,7 +190,6 @@ class BulletPool {
         }
       }
     }
-
     if (this.isReloading && this.reloadCooldown > 0) {
       reloadText.text = 'WAIT';
       --this.reloadCooldown;
@@ -243,6 +274,38 @@ function MoveCreature(creature) {
   }
 }
 
+function AnimatePlayer(mouseX) {
+
+  const x = player.x,
+    y = player.y,
+    half = (mouseX >= renderer.width / 2 ? 2 : 1);
+
+  console.log('im here');
+  if (player.lastMouseHalf !== half) {
+    if (mouseX >= player.x) {
+      player = playerRunningRight;
+      player.play();
+      console.log('right run');
+    } else {
+      player = playerRunningLeft;
+      player.play();
+      console.log('left run');
+    }
+    // if (player.vx === 0 && player.vy === 0) {
+    //   player = new PIXI.Sprite((mouseX >= player.x ?
+    //     playerStaleRight : playerStaleLeft));
+    //   console.log('stale: vx = ' + player.vx + '; vy = ' + player.vy);
+    // }
+  }
+  player.x = x;
+  player.y = y;
+  player.lastMouseHalf = half;
+
+  console.log('passed this');
+
+  return player;
+}
+
 stageLevel.addChild(ammoLeftText);
 stageLevel.addChild(reloadText);
 
@@ -252,8 +315,8 @@ animate();
 function animate() {
   MoveCreature(player);
   playerBulletPool.updateBulletsSpeed();
-
   if (player.shooting) {
+
     if (player.shootingTimeout === gunTimeout) {
       player.shootingTimeout = 0;
       playerBulletPool.shoot(
@@ -263,9 +326,20 @@ function animate() {
     }
     ++player.shootingTimeout;
   }
+  AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
 
   // render the container
   renderer.render(stageLevel);
-
   requestAnimationFrame(animate);
 }
+
+module.exports = {
+  stageLevel,
+  player,
+  playerBulletPool,
+  dungeon,
+  playerRunningRight,
+  playerRunningLeft,
+  renderer,
+  AnimatePlayer
+};
