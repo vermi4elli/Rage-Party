@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { ScaleToWindow } from './scaleWindow';
 import { keyboard } from './keyboard';
-import { collisionType, contain } from './contain';
+import { collisionType, contain, checkCollision } from './contain';
 
 const renderer =
   PIXI.autoDetectRenderer({
@@ -21,14 +21,23 @@ const stageLevel = new PIXI.Container();
 // const stageMenu = new PIXI.Container();
 
 const bunnyTexture = PIXI.Texture.from('assets/bunny.png');
-const bulletTexture = PIXI.Texture.from('assets/bullet.png');
+const playerBulletTexture = PIXI.Texture.from('assets/bullet.png');
+const enemyBulletTexture = PIXI.Texture.from('assets/bullet_enemy.png');
 const mapTexture = PIXI.Texture.from('assets/levels/baseMap.png');
 const defaultIcon = 'url(\'./assets/utils/crosshair.cur\'),auto';
-const explosionTextures = [];
+
+// EXPLOSION textures
+const explosionOrangeTextures = [];
 for (let i = 1; i <= 6; i++) {
   const texture = PIXI.Texture.from(
     './assets/explo_orange/explo_orange_' + i + '.png');
-  explosionTextures.push(texture);
+  explosionOrangeTextures.push(texture);
+}
+const explosionRedTextures = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/explo_red/explo_red_' + i + '.png');
+  explosionRedTextures.push(texture);
 }
 
 // PLAYER running forward textures
@@ -96,6 +105,12 @@ for (let i = 6; i >= 1; i--) {
     './assets/enemy/runRight/enemy_r_' + i + '.png');
   enemyRunRightBack.push(texture);
 }
+const enemyStaleLeft = [];
+enemyStaleLeft.push(PIXI.Texture.from(
+  './assets/enemy/runLeft/enemy_l_6.png'));
+const enemyStaleRight = [];
+enemyStaleRight.push(PIXI.Texture.from(
+  './assets/enemy/runRight/enemy_r_6.png'));
 
 const ammoLeftStyle = new PIXI.TextStyle({
   fill: 'white',
@@ -131,19 +146,18 @@ stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
 const player = new PIXI.extras.AnimatedSprite(playerStaleLeft);
-// move the sprite to the center of the screen
-player.position.x = renderer.width / 2;
 
+player.position.x = renderer.width / 4;
 player.position.y = renderer.height / 2;
+
 player.vx = 0;
 player.vy = 0;
+
 player.scale.x = 1.5;
-
 player.scale.y = 1.5;
+
 const gunTimeout = 10;
-
 player.shooting = false;
-
 player.shootingTimeout = gunTimeout;
 
 const playerState = {
@@ -168,16 +182,25 @@ stageLevel.on('mouseup', _ => {
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
 });
-// yet to make it modular
+
 class BulletPool {
-  constructor(texture, bulletAmount, bulletSpeed, reloadSpeed) {
-    this.texture = texture;
+  constructor(
+    bulletTexture,
+    explosionTexture,
+    bulletAmount,
+    bulletSpeed,
+    bulletDamage,
+    reloadSpeed
+  ) {
+    this.bulletTexture = bulletTexture;
+    this.explosionTexture = explosionTexture;
     this.bulletPool = [];
 
     this.active = false;
     this.amount = bulletAmount;
     this.bulletsLeft = bulletAmount;
     this.speed = bulletSpeed;
+    this.damage = bulletDamage;
 
     ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
 
@@ -186,7 +209,7 @@ class BulletPool {
     this.reloadCooldown = reloadSpeed;
 
     for (let i = 0; i < bulletAmount; i++) {
-      const bullet = new PIXI.Sprite(this.texture);
+      const bullet = new PIXI.Sprite(this.bulletTexture);
       bullet.position.x = 0;
       bullet.position.y = 0;
       bullet.visible = false;
@@ -206,8 +229,20 @@ class BulletPool {
     return this.amount;
   }
 
+  getDamage() {
+    return this.damage;
+  }
+
   getReloadSpeed() {
     return this.reloadSpeed;
+  }
+
+  getBullet(index) {
+    return this.bulletPool[index];
+  }
+
+  setBulletDestroyed(index) {
+    this.bulletPool[index].destroyed = true;
   }
 
   next() {
@@ -222,13 +257,12 @@ class BulletPool {
     if (this.active) {
       for (let b = this.bulletPool.length - 1; b >= 0; b--) {
         if (this.bulletPool[b].active &&
-          (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
-            contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
-          console.log('x col: ' + contain(this.bulletPool[b], dungeon).x +
-            '; y col: ' + contain(this.bulletPool[b], dungeon).y);
+          (contain(this.bulletPool[b], dungeon, 0.6).x !== collisionType.no ||
+            contain(this.bulletPool[b], dungeon, 0.6).y !== collisionType.no)) {
           this.bulletPool[b].visible = false;
 
-          const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
+          const explosion =
+            new PIXI.extras.AnimatedSprite(this.explosionTexture);
 
           explosion.x = this.bulletPool[b].x;
           explosion.y = this.bulletPool[b].y;
@@ -242,6 +276,25 @@ class BulletPool {
           stageLevel.addChild(explosion);
 
           this.bulletPool[b].active = false;
+        }
+        if (this.bulletPool[b].destroyed) {
+          this.bulletPool[b].destroyed = false;
+          this.bulletPool[b].visible = false;
+          this.bulletPool[b].active = false;
+
+          const explosion =
+            new PIXI.extras.AnimatedSprite(this.explosionTexture);
+          explosion.x = this.bulletPool[b].x;
+          explosion.y = this.bulletPool[b].y;
+          explosion.anchor.set(0.5);
+          explosion.rotation = Math.random() * Math.PI;
+          explosion.scale.set(0.2 + Math.random() * 0.2);
+          explosion.loop = false;
+          explosion.animationSpeed = 0.5;
+          explosion.play();
+          explosion.onComplete = () => stageLevel.removeChild(explosion);
+
+          stageLevel.addChild(explosion);
         }
         if (this.bulletPool[b].active) {
           this.bulletPool[b].x +=
@@ -292,14 +345,103 @@ class BulletPool {
     this.isReloading = true;
     this.reloadCooldown = this.reloadSpeed;
   }
-
 }
+
 const bulletAmount = 10;
 const bulletSpeed = 8;
 const reloadSpeed = 80;
+const bulletDamage = 20;
 
 const playerBulletPool =
-  new BulletPool(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed);
+  new BulletPool(
+    playerBulletTexture,
+    explosionOrangeTextures,
+    bulletAmount,
+    bulletSpeed,
+    bulletDamage,
+    reloadSpeed
+  );
+
+class EnemyManager {
+  constructor(
+    enemyAmount,
+    enemyHealth,
+    enemyBulletAmount,
+    enemyBulletSpeed,
+    enemyReloadSpeed
+  ) {
+    this.enemies = [];
+
+    for (let i = 0; i < enemyAmount; i++) {
+      const enemyTemp = new PIXI.extras.AnimatedSprite(enemyStaleLeft);
+      enemyTemp.position.x = player.x + 50 + i * 100;
+      //player.x + Math.random() * (dungeon.width - player.x - 90);
+      enemyTemp.position.y = player.y;
+      //Math.random() * (dungeon.height - 90);
+      enemyTemp.scale.x = 1.5;
+      enemyTemp.scale.y = 1.5;
+      enemyTemp.visible = true;
+      stageLevel.addChild(enemyTemp);
+
+      const enemyBulletPool = new BulletPool(
+        enemyBulletTexture,
+        explosionRedTextures,
+        enemyBulletAmount,
+        enemyBulletSpeed,
+        enemyReloadSpeed);
+
+      const enemyStruct = {
+        active: true,
+        enemy: enemyTemp,
+        enemyHealth,
+        enemyBulletPool
+      };
+
+      this.enemies.push(enemyStruct);
+
+      this.enemiesLeft = enemyAmount;
+      this.enemiesAmount = enemyAmount;
+    }
+  }
+
+  Execute() {
+    if (this.enemiesLeft > 0) {
+      for (let i = 0; i < this.enemiesAmount; i++) {
+        if (this.enemies[i].active) {
+
+          // check the player's bullets collision with this enemy
+          for (let j = 0; j < playerBulletPool.getBulletsAmount(); j++) {
+            if (playerBulletPool.getBullet(j).active &&
+              !playerBulletPool.getBullet(j).destroyed &&
+              checkCollision(
+                playerBulletPool.getBullet(j),
+                this.enemies[i].enemy,
+                this.enemies[i].enemy.width / 4,
+                this.enemies[i].enemy.height / 2)) {
+              playerBulletPool.setBulletDestroyed(j);
+              this.enemies[i].enemyHealth -= playerBulletPool.getDamage();
+
+              // check if the enemy is killed after the shot
+              if (this.enemies[i].enemyHealth <= 0) {
+                this.enemies[i].active = false;
+                this.enemies[i].enemy.visible = false;
+                stageLevel.removeChild(this.enemies[i].enemy);
+                this.enemiesLeft--;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+const enemyManager = new EnemyManager(
+  5,
+  100,
+  5,
+  6,
+  80);
 
 // character control
 const linearSpeed = 4;
@@ -325,17 +467,17 @@ down.release = () => player.vy += linearSpeed;
 reloadButton.press = () => playerBulletPool.reload();
 
 function MoveCreature(creature) {
-  const playerCollisions = contain(creature, dungeon);
+  const creatureCollisions = contain(creature, dungeon);
 
-  if (playerCollisions.x === collisionType.no ||
-    ((playerCollisions.x === collisionType.left) && (creature.vx >= 0)) ||
-    ((playerCollisions.x === collisionType.right) && (creature.vx <= 0))
+  if (creatureCollisions.x === collisionType.no ||
+    ((creatureCollisions.x === collisionType.left) && (creature.vx >= 0)) ||
+    ((creatureCollisions.x === collisionType.right) && (creature.vx <= 0))
   ) {
     creature.x += creature.vx;
   }
-  if (playerCollisions.y === collisionType.no ||
-    ((playerCollisions.y === collisionType.top) && (creature.vy <= 0)) ||
-    ((playerCollisions.y === collisionType.down) && (creature.vy >= 0))
+  if (creatureCollisions.y === collisionType.no ||
+    ((creatureCollisions.y === collisionType.top) && (creature.vy <= 0)) ||
+    ((creatureCollisions.y === collisionType.down) && (creature.vy >= 0))
   ) {
     creature.y -= creature.vy;
   }
@@ -408,6 +550,7 @@ animate();
 function animate() {
   MoveCreature(player);
   playerBulletPool.updateBulletsSpeed();
+  enemyManager.Execute();
 
   if (player.shooting) {
     if (player.shootingTimeout === gunTimeout) {

@@ -15,41 +15,41 @@
         }
     </style>
 </head>
-    
+
 <body>
 <div class='wrapper'>
     <div class='pad1'>
         <h1><a href="../../../index.html">All files</a> / <a href="index.html">Rage-Party/src/scripts</a> game.js</h1>
         <div class='clearfix'>
-            
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>0/197</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
                 <span class='fraction'>0/49</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>0/24</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>0/182</span>
             </div>
-        
-            
+
+
         </div>
         <p class="quiet">
             Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
@@ -775,21 +775,21 @@ const mapTexture = <span class="cstat-no" title="statement not covered" >PIXI.Te
 const defaultIcon = <span class="cstat-no" title="statement not covered" >'url(\'./assets/utils/crosshair.cur\'),auto';</span>
 const explosionTextures = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >for (let i = <span class="cstat-no" title="statement not covered" >1;</span> i &lt;= 6; i++) {</span>
-  const texture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
+  const bulletTexture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
     './assets/explo_orange/explo_orange_' + i + '.png');
-<span class="cstat-no" title="statement not covered" >  explosionTextures.push(texture);</span>
+<span class="cstat-no" title="statement not covered" >  explosionTextures.push(bulletTexture);</span>
 }
 const playerRunLeft = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >for (let i = <span class="cstat-no" title="statement not covered" >1;</span> i &lt;= 6; i++) {</span>
-  const texture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
+  const bulletTexture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
     './assets/hero/runLeft/hero ' + i + '.png');
-<span class="cstat-no" title="statement not covered" >  playerRunLeft.push(texture);</span>
+<span class="cstat-no" title="statement not covered" >  playerRunLeft.push(bulletTexture);</span>
 }
 const playerRunRight = <span class="cstat-no" title="statement not covered" >[];</span>
 <span class="cstat-no" title="statement not covered" >for (let i = <span class="cstat-no" title="statement not covered" >1;</span> i &lt;= 6; i++) {</span>
-  const texture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
+  const bulletTexture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
     './assets/hero/runRight/hero ' + i + '.png');
-<span class="cstat-no" title="statement not covered" >  playerRunRight.push(texture);</span>
+<span class="cstat-no" title="statement not covered" >  playerRunRight.push(bulletTexture);</span>
 }
 const playerStaleLeft = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from(</span>
   './assets/hero/runLeft/hero 6.png');
@@ -832,7 +832,7 @@ const dungeon = <span class="cstat-no" title="statement not covered" >new PIXI.S
 &nbsp;
 <span class="cstat-no" title="statement not covered" >stageLevel.addChild(dungeon);</span>
 &nbsp;
-// create a new Sprite using the texture
+// create a new Sprite using the bulletTexture
 const player = <span class="cstat-no" title="statement not covered" >new PIXI.extras.AnimatedSprite(playerStaleLeft);</span>
 // move the sprite to the center of the screen
 <span class="cstat-no" title="statement not covered" >player.position.x = renderer.width / 2;</span>
@@ -858,8 +858,8 @@ const gunTimeout = <span class="cstat-no" title="statement not covered" >10;</sp
 });
 // yet to make it modular
 class BulletPool {
-<span class="fstat-no" title="function not covered" >  co</span>nstructor(texture, bulletAmount, bulletSpeed, reloadSpeed) {
-<span class="cstat-no" title="statement not covered" >    this.texture = texture;</span>
+<span class="fstat-no" title="function not covered" >  co</span>nstructor(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed) {
+<span class="cstat-no" title="statement not covered" >    this.bulletTexture = bulletTexture;</span>
 <span class="cstat-no" title="statement not covered" >    this.bulletPool = [];</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    this.active = false;</span>
@@ -874,7 +874,7 @@ class BulletPool {
 <span class="cstat-no" title="statement not covered" >    this.reloadCooldown = reloadSpeed;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; bulletAmount; i++) {</span>
-      const bullet = <span class="cstat-no" title="statement not covered" >new PIXI.Sprite(this.texture);</span>
+      const bullet = <span class="cstat-no" title="statement not covered" >new PIXI.Sprite(this.bulletTexture);</span>
 <span class="cstat-no" title="statement not covered" >      bullet.position.x = 0;</span>
 <span class="cstat-no" title="statement not covered" >      bullet.position.y = 0;</span>
 <span class="cstat-no" title="statement not covered" >      bullet.visible = false;</span>
@@ -1112,4 +1112,3 @@ function <span class="fstat-no" title="function not covered" >animate(</span>) {
         <script src="../../../block-navigation.js"></script>
     </body>
 </html>
-    
