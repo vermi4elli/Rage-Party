@@ -30,6 +30,45 @@ for (let i = 1; i <= 6; i++) {
     './assets/explo_orange/explo_orange_' + i + '.png');
   explosionTextures.push(texture);
 }
+// running forward textures
+const playerRunLeft = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runLeft/hero ' + i + '.png');
+  playerRunLeft.push(texture);
+}
+const playerRunRight = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runRight/hero ' + i + '.png');
+  playerRunRight.push(texture);
+}
+// running backward textures
+const playerRunLeftBack = [];
+for (let i = 6; i >= 1; i--) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runLeft/hero ' + i + '.png');
+  playerRunLeftBack.push(texture);
+}
+const playerRunRightBack = [];
+for (let i = 6; i >= 1; i--) {
+  const texture = PIXI.Texture.from(
+    './assets/hero/runRight/hero ' + i + '.png');
+  playerRunRightBack.push(texture);
+}
+const playerStaleLeft = [];
+playerStaleLeft.push(PIXI.Texture.from(
+  './assets/hero/runLeft/hero 6.png'));
+const playerStaleRight = [];
+playerStaleRight.push(PIXI.Texture.from(
+  './assets/hero/runRight/hero 6.png'));
+const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
+  playerRunningRight = new PIXI.extras.AnimatedSprite(playerRunRight),
+  playerRunningLeftBack = new PIXI.extras.AnimatedSprite(playerRunLeftBack),
+  playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
+playerRunningLeft.loop = true;
+playerRunningRight.loop = true;
+
 const ammoLeftStyle = new PIXI.TextStyle({
   fill: 'white',
   fontFamily: 'Impact',
@@ -53,7 +92,7 @@ dungeon.position.y = 0;
 stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
-const player = new PIXI.Sprite(bunnyTexture);
+const player = new PIXI.extras.AnimatedSprite(playerStaleLeft);
 // move the sprite to the center of the screen
 player.position.x = renderer.width / 2;
 
@@ -68,6 +107,16 @@ const gunTimeout = 10;
 player.shooting = false;
 
 player.shootingTimeout = gunTimeout;
+
+const playerState = {
+  idleRight: 0,
+  idleLeft: 1,
+  runRight: 2,
+  runLeft: 3,
+  runRightBack: 4,
+  runLeftBack: 5
+};
+player.state = playerState.idleRight;
 
 stageLevel.addChild(player);
 
@@ -195,7 +244,7 @@ const playerBulletPool =
   new BulletPool(bulletTexture, bulletAmount, bulletSpeed, reloadSpeed);
 
 // character control
-const linearSpeed = 7;
+const linearSpeed = 4;
 
 const left = keyboard('KeyA'),
   up = keyboard('KeyW'),
@@ -221,23 +270,81 @@ function MoveCreature(creature) {
   const playerCollisions = contain(creature, dungeon);
 
   if (playerCollisions.x === collisionType.no ||
-    ((playerCollisions.x === collisionType.left) && (player.vx >= 0)) ||
-    ((playerCollisions.x === collisionType.right) && (player.vx <= 0))
+    ((playerCollisions.x === collisionType.left) && (creature.vx >= 0)) ||
+    ((playerCollisions.x === collisionType.right) && (creature.vx <= 0))
   ) {
     creature.x += creature.vx;
   }
   if (playerCollisions.y === collisionType.no ||
-    ((playerCollisions.y === collisionType.top) && (player.vy <= 0)) ||
-    ((playerCollisions.y === collisionType.down) && (player.vy >= 0))
+    ((playerCollisions.y === collisionType.top) && (creature.vy <= 0)) ||
+    ((playerCollisions.y === collisionType.down) && (creature.vy >= 0))
   ) {
     creature.y -= creature.vy;
   }
 }
 
+function AnimatePlayer(mouseX) {
+  const half = (mouseX >= player.x ? 2 : 1),
+    moving = player.vx !== 0 || player.vy !== 0;
+  const newState = (moving ?
+    (half === 2 ?
+      (player.vx >= 0 ?
+        playerState.runRight :
+        playerState.runRightBack) :
+      (player.vx < 0 ?
+        playerState.runLeft :
+        playerState.runLeftBack)
+    ) :
+    (half === 2 ? playerState.idleRight : playerState.idleLeft));
+
+  if (player.state !== newState) {
+    switch (newState) {
+    case playerState.idleRight:
+      player.textures = playerStaleRight;
+      player.loop = true;
+      player.play();
+      break;
+    case playerState.idleLeft:
+      player.textures = playerStaleLeft;
+      player.loop = true;
+      player.play();
+      break;
+    case playerState.runRight:
+      player.textures = playerRunRight;
+      player.loop = true;
+      player.animationSpeed = 0.1;
+      player.play();
+      break;
+    case playerState.runLeft:
+      player.textures = playerRunLeft;
+      player.loop = true;
+      player.animationSpeed = 0.1;
+      player.play();
+      break;
+    case playerState.runRightBack:
+      player.textures = playerRunRightBack;
+      player.loop = true;
+      player.animationSpeed = 0.1;
+      player.play();
+      break;
+    case playerState.runLeftBack:
+      player.textures = playerRunLeftBack;
+      player.loop = true;
+      player.animationSpeed = 0.1;
+      player.play();
+      break;
+    }
+
+    player.state = newState;
+  }
+
+  return player;
+}
+
 stageLevel.addChild(ammoLeftText);
 
 // start animating
-ScaleToWindow(renderer.view);
+//ScaleToWindow(renderer.view);
 animate();
 function animate() {
   MoveCreature(player);
@@ -259,3 +366,14 @@ function animate() {
 
   requestAnimationFrame(animate);
 }
+
+module.exports = {
+  stageLevel,
+  player,
+  playerBulletPool,
+  dungeon,
+  playerRunningRight,
+  playerRunningLeft,
+  renderer,
+  AnimatePlayer
+};

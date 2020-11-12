@@ -42,6 +42,6 @@
     "core-js": "^3.6.5",
     "fastify": "^3.5.1",
     "fastify-static": "^3.2.1",
-    "pixi.js": "^5.3.3"
+    "pixi.js": "^4.8.9"
   }
 }
