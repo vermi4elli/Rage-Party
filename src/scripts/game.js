@@ -145,7 +145,7 @@ dungeon.position.y = 0;
 stageLevel.addChild(dungeon);
 
 // create a new Sprite using the texture
-const player = new PIXI.extras.AnimatedSprite(playerStaleLeft);
+const player = new PIXI.extras.AnimatedSprite(playerStaleRight);
 
 player.position.x = renderer.width / 4;
 player.position.y = renderer.height / 2;
@@ -374,10 +374,12 @@ class EnemyManager {
 
     for (let i = 0; i < enemyAmount; i++) {
       const enemyTemp = new PIXI.extras.AnimatedSprite(enemyStaleLeft);
-      enemyTemp.position.x = player.x + 50 + i * 100;
-      //player.x + Math.random() * (dungeon.width - player.x - 90);
-      enemyTemp.position.y = player.y;
-      //Math.random() * (dungeon.height - 90);
+      enemyTemp.position.x = player.x + 100 + Math.random() *
+        (renderer.width - (player.x + 100 - dungeon.x) - 120);
+      enemyTemp.position.y = dungeon.y + 90 + Math.random() *
+        (renderer.height - 270);
+      console.log('h: ' + renderer.height + '; w: ' + renderer.width +
+        '; eX: ' + enemyTemp.x + '; eY: ' + enemyTemp.y);
       enemyTemp.scale.x = 1.5;
       enemyTemp.scale.y = 1.5;
       enemyTemp.visible = true;
