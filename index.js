@@ -18,6 +18,11 @@ fastify.get('/register', async (request, reply) => {
   reply.send({ a: 'hello' });
 });
 
+fastify.get('/error', async () => {
+  throw new Error('error occurred!!!');
+  //reply.send(new Error('error occurred!!!'));
+});
+
 // Run the server!
 const start = async () => {
   try {
@@ -29,3 +34,7 @@ const start = async () => {
   }
 };
 start();
+
+module.exports = {
+  fastify
+};
