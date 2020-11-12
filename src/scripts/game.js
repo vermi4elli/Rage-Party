@@ -174,7 +174,7 @@ class BulletPool {
             contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
           this.bulletPool[b].visible = false;
 
-          const explosion = new PIXI.AnimatedSprite(explosionTextures);
+          const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
 
           explosion.x = this.bulletPool[b].x;
           explosion.y = this.bulletPool[b].y;
@@ -374,6 +374,8 @@ module.exports = {
   dungeon,
   playerRunningRight,
   playerRunningLeft,
+  playerRunningLeftBack,
+  playerRunningRightBack,
   renderer,
   AnimatePlayer
 };
