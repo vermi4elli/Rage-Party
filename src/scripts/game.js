@@ -30,7 +30,8 @@ for (let i = 1; i <= 6; i++) {
     './assets/explo_orange/explo_orange_' + i + '.png');
   explosionTextures.push(texture);
 }
-// running forward textures
+
+// PLAYER running forward textures
 const playerRunLeft = [];
 for (let i = 1; i <= 6; i++) {
   const texture = PIXI.Texture.from(
@@ -68,6 +69,33 @@ const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
   playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
 playerRunningLeft.loop = true;
 playerRunningRight.loop = true;
+
+// ENEMY running forward textures
+const enemyRunLeft = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/enemy/runLeft/enemy_l_' + i + '.png');
+  enemyRunLeft.push(texture);
+}
+const enemyRunRight = [];
+for (let i = 1; i <= 6; i++) {
+  const texture = PIXI.Texture.from(
+    './assets/enemy/runRight/enemy_r_' + i + '.png');
+  enemyRunRight.push(texture);
+}
+// running backward textures
+const enemyRunLeftBack = [];
+for (let i = 6; i >= 1; i--) {
+  const texture = PIXI.Texture.from(
+    './assets/enemy/runLeft/enemy_l_' + i + '.png');
+  enemyRunLeftBack.push(texture);
+}
+const enemyRunRightBack = [];
+for (let i = 6; i >= 1; i--) {
+  const texture = PIXI.Texture.from(
+    './assets/enemy/runRight/enemy_r_' + i + '.png');
+  enemyRunRightBack.push(texture);
+}
 
 const ammoLeftStyle = new PIXI.TextStyle({
   fill: 'white',
