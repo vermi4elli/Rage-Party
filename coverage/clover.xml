@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1605146389623" clover="3.2.0">
-  <project timestamp="1605146389623" name="All files">
+<coverage generated="1605270842602" clover="3.2.0">
+  <project timestamp="1605270842602" name="All files">
     <metrics statements="243" coveredstatements="232" conditionals="73" coveredconditionals="63" methods="32" coveredmethods="19" elements="348" coveredelements="314" complexity="0" loc="243" ncloc="243" packages="2" files="4" classes="4"/>
     <package name="Rage-Party">
       <metrics statements="19" coveredstatements="17" conditionals="4" coveredconditionals="3" methods="4" coveredmethods="4"/>
