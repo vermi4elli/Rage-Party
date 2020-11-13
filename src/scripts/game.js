@@ -159,6 +159,8 @@ player.scale.y = 1.5;
 const gunTimeout = 10;
 player.shooting = false;
 player.shootingTimeout = gunTimeout;
+player.health = 100;
+player.isAlive = true;
 
 const playerState = {
   idleRight: 0,
@@ -453,7 +455,7 @@ class EnemyManager {
           }
 
           // try to fire bullets
-          if (this.enemies[i].active) {
+          if (this.enemies[i].active && player.isAlive) {
             if (this.enemies[i].shootingTimeout === gunTimeout) {
               this.enemies[i].shootingTimeout = 0;
               this.enemies[i].enemyBulletPool.shoot(player.x, player.y, true);
@@ -466,6 +468,31 @@ class EnemyManager {
       }
     }
     for (let i = 0; i < this.enemiesAmount; i++) {
+      for (let j = 0;
+        j < this.enemies[i].enemyBulletPool.getBulletsAmount();
+        j++) {
+        if (this.enemies[i].enemyBulletPool.getBullet(j).active &&
+          !this.enemies[i].enemyBulletPool.getBullet(j).destroyed &&
+          player.isAlive &&
+          checkCollision(
+            this.enemies[i].enemyBulletPool.getBullet(j),
+            player,
+            player.width / 4,
+            player.height / 2)) {
+          this.enemies[i].enemyBulletPool.setBulletDestroyed(j);
+          player.health -=
+            this.enemies[i].enemyBulletPool.getDamage();
+
+          // check if the player is killed after the shot
+          if (player.health <= 0) {
+            player.active = false;
+            player.visible = false;
+            player.isAlive = false;
+            stageLevel.removeChild(player);
+          }
+        }
+      }
+
       // updating this enemies bullets even if the enemy is dead
       this.enemies[i].enemyBulletPool.updateBulletsSpeed();
     }
