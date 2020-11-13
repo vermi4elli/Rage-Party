@@ -190,11 +190,13 @@ class BulletPool {
     bulletAmount,
     bulletSpeed,
     bulletDamage,
-    reloadSpeed
+    reloadSpeed,
+    sourceSprite
   ) {
     this.bulletTexture = bulletTexture;
     this.explosionTexture = explosionTexture;
     this.bulletPool = [];
+    this.sourceSprite = sourceSprite;
 
     this.active = false;
     this.amount = bulletAmount;
@@ -208,7 +210,7 @@ class BulletPool {
     this.isReloading = false;
     this.reloadCooldown = reloadSpeed;
 
-    for (let i = 0; i < bulletAmount; i++) {
+    for (let i = 0; i < bulletAmount * 2; i++) {
       const bullet = new PIXI.Sprite(this.bulletTexture);
       bullet.position.x = 0;
       bullet.position.y = 0;
@@ -304,26 +306,32 @@ class BulletPool {
         }
       }
     }
-    if (this.isReloading && this.reloadCooldown > 0) {
-      reloadText.text = 'WAIT';
+    if (this.isReloading &&
+      this.reloadCooldown > 0
+    ) {
+      if (this.sourceSprite === player) reloadText.text = 'WAIT';
       --this.reloadCooldown;
     } else if (this.isReloading && this.reloadCooldown === 0) {
       this.isReloading = false;
       this.bulletsLeft = this.amount;
-      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
-      reloadText.visible = false;
+      if (this.sourceSprite === player) {
+        ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+        reloadText.visible = false;
+      }
     }
   }
 
-  shoot(mX, mY) {
+  shoot(targetX, targetY, autoReload) {
     if (!this.isReloading && this.bulletsLeft > 0) {
       const bullet = this.next();
       --this.bulletsLeft;
 
-      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+      if (this.sourceSprite === player) {
+        ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+      }
 
-      bullet.direction.x = mX - player.x;
-      bullet.direction.y = mY - player.y;
+      bullet.direction.x = targetX - this.sourceSprite.x;
+      bullet.direction.y = targetY - this.sourceSprite.y;
 
       const length = Math.sqrt(
         bullet.direction.x * bullet.direction.x +
@@ -331,11 +339,18 @@ class BulletPool {
       bullet.direction.x /= length;
       bullet.direction.y /= length;
 
-      bullet.position.x = player.x + player.width / 5;
-      bullet.position.y = player.y + player.height / 3;
+      bullet.position.x = this.sourceSprite.x + this.sourceSprite.width / 5;
+      bullet.position.y = this.sourceSprite.y + this.sourceSprite.height / 3;
 
       bullet.active = true;
-    } else if (!this.isReloading && this.bulletsLeft === 0) {
+    } else if (autoReload &&
+      this.bulletsLeft === 0 &&
+      !this.isReloading) {
+      this.reload();
+    } else if (!this.isReloading &&
+      this.bulletsLeft === 0 &&
+      this.sourceSprite === player
+    ) {
       reloadText.text = 'PRESS \'R\' TO RELOAD';
       reloadText.visible = true;
     }
@@ -359,7 +374,8 @@ const playerBulletPool =
     bulletAmount,
     bulletSpeed,
     bulletDamage,
-    reloadSpeed
+    reloadSpeed,
+    player
   );
 
 class EnemyManager {
@@ -368,6 +384,7 @@ class EnemyManager {
     enemyHealth,
     enemyBulletAmount,
     enemyBulletSpeed,
+    enemyBulletDamage,
     enemyReloadSpeed
   ) {
     this.enemies = [];
@@ -390,13 +407,16 @@ class EnemyManager {
         explosionRedTextures,
         enemyBulletAmount,
         enemyBulletSpeed,
-        enemyReloadSpeed);
+        enemyBulletDamage,
+        enemyReloadSpeed,
+        enemyTemp);
 
       const enemyStruct = {
         active: true,
         enemy: enemyTemp,
         enemyHealth,
-        enemyBulletPool
+        enemyBulletPool,
+        shootingTimeout: 0
       };
 
       this.enemies.push(enemyStruct);
@@ -410,7 +430,6 @@ class EnemyManager {
     if (this.enemiesLeft > 0) {
       for (let i = 0; i < this.enemiesAmount; i++) {
         if (this.enemies[i].active) {
-
           // check the player's bullets collision with this enemy
           for (let j = 0; j < playerBulletPool.getBulletsAmount(); j++) {
             if (playerBulletPool.getBullet(j).active &&
@@ -432,8 +451,23 @@ class EnemyManager {
               }
             }
           }
+
+          // try to fire bullets
+          if (this.enemies[i].active) {
+            if (this.enemies[i].shootingTimeout === gunTimeout) {
+              this.enemies[i].shootingTimeout = 0;
+              this.enemies[i].enemyBulletPool.shoot(player.x, player.y, true);
+            } else {
+              ++this.enemies[i].shootingTimeout;
+            }
+          }
         }
+
       }
+    }
+    for (let i = 0; i < this.enemiesAmount; i++) {
+      // updating this enemies bullets even if the enemy is dead
+      this.enemies[i].enemyBulletPool.updateBulletsSpeed();
     }
   }
 }
@@ -443,6 +477,7 @@ const enemyManager = new EnemyManager(
   100,
   5,
   6,
+  20,
   80);
 
 // character control
@@ -559,7 +594,8 @@ function animate() {
       player.shootingTimeout = 0;
       playerBulletPool.shoot(
         renderer.plugins.interaction.mouse.global.x,
-        renderer.plugins.interaction.mouse.global.y
+        renderer.plugins.interaction.mouse.global.y,
+        false
       );
     }
     ++player.shootingTimeout;
