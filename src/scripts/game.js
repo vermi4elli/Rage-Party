@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { ScaleToWindow } from './scaleWindow';
 import { keyboard } from './keyboard';
-import { collisionType, contain, checkCollision } from './contain';
+import { checkCollision, collisionType, contain } from './contain';
 
 const renderer =
   PIXI.autoDetectRenderer({
@@ -12,178 +12,73 @@ const renderer =
   });
 document.body.appendChild(renderer.view);
 
-window.addEventListener('resize', _ => {
+window.addEventListener('resize', () => {
   ScaleToWindow(renderer.view);
 });
 
-// create the root of the scene graph
+// the sprites array
+const textures = [
+  'assets/bullet.png',
+  'assets/bullet_enemy.png',
+  'assets/levels/baseMap.png'];
+for (let i = 1, j = 6; i <= 6; i++, j--) {
+  textures.push(`./assets/explo_orange/explo_orange_${i}.png`);
+  textures.push(`./assets/explo_red/explo_red_${i}.png`);
+  textures.push(`./assets/hero/runLeft/hero ${i}.png`);
+  textures.push(`./assets/hero/runRight/hero ${i}.png`);
+  textures.push(`./assets/enemy/runLeft/enemy_l_${i}.png`);
+  textures.push(`./assets/enemy/runRight/enemy_r_${i}.png`);
+}
+
+const loader = new PIXI.loaders.Loader();
+loader.add(textures);
+loader.onComplete.add(setup);
+loader.load();
+
+let player,
+  dungeon,
+  ammoLeftText,
+  reloadText,
+  playerBulletPool,
+  enemyManager,
+  playerBulletTexture,
+  enemyBulletTexture;
+const explosionOrangeTextures = [],
+  explosionRedTextures = [],
+  playerRunLeft = [],
+  playerRunRight = [],
+  playerRunLeftBack = [],
+  playerRunRightBack = [],
+  playerStaleLeft = [],
+  playerStaleRight = [],
+  enemyRunLeft = [],
+  enemyRunRight = [],
+  enemyRunLeftBack = [],
+  enemyRunRightBack = [],
+  enemyStaleLeft = [],
+  enemyStaleRight = [];
+
 const stageLevel = new PIXI.Container();
-// const stageMenu = new PIXI.Container();
 
-const bunnyTexture = PIXI.Texture.from('assets/bunny.png');
-const playerBulletTexture = PIXI.Texture.from('assets/bullet.png');
-const enemyBulletTexture = PIXI.Texture.from('assets/bullet_enemy.png');
-const mapTexture = PIXI.Texture.from('assets/levels/baseMap.png');
-const defaultIcon = 'url(\'./assets/utils/crosshair.cur\'),auto';
-
-// EXPLOSION textures
-const explosionOrangeTextures = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/explo_orange/explo_orange_' + i + '.png');
-  explosionOrangeTextures.push(texture);
-}
-const explosionRedTextures = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/explo_red/explo_red_' + i + '.png');
-  explosionRedTextures.push(texture);
-}
-
-// PLAYER running forward textures
-const playerRunLeft = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/hero/runLeft/hero ' + i + '.png');
-  playerRunLeft.push(texture);
-}
-const playerRunRight = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/hero/runRight/hero ' + i + '.png');
-  playerRunRight.push(texture);
-}
-// running backward textures
-const playerRunLeftBack = [];
-for (let i = 6; i >= 1; i--) {
-  const texture = PIXI.Texture.from(
-    './assets/hero/runLeft/hero ' + i + '.png');
-  playerRunLeftBack.push(texture);
-}
-const playerRunRightBack = [];
-for (let i = 6; i >= 1; i--) {
-  const texture = PIXI.Texture.from(
-    './assets/hero/runRight/hero ' + i + '.png');
-  playerRunRightBack.push(texture);
-}
-const playerStaleLeft = [];
-playerStaleLeft.push(PIXI.Texture.from(
-  './assets/hero/runLeft/hero 6.png'));
-const playerStaleRight = [];
-playerStaleRight.push(PIXI.Texture.from(
-  './assets/hero/runRight/hero 6.png'));
-const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
-  playerRunningRight = new PIXI.extras.AnimatedSprite(playerRunRight),
-  playerRunningLeftBack = new PIXI.extras.AnimatedSprite(playerRunLeftBack),
-  playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
-playerRunningLeft.loop = true;
-playerRunningRight.loop = true;
-
-// ENEMY running forward textures
-const enemyRunLeft = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/enemy/runLeft/enemy_l_' + i + '.png');
-  enemyRunLeft.push(texture);
-}
-const enemyRunRight = [];
-for (let i = 1; i <= 6; i++) {
-  const texture = PIXI.Texture.from(
-    './assets/enemy/runRight/enemy_r_' + i + '.png');
-  enemyRunRight.push(texture);
-}
-// running backward textures
-const enemyRunLeftBack = [];
-for (let i = 6; i >= 1; i--) {
-  const texture = PIXI.Texture.from(
-    './assets/enemy/runLeft/enemy_l_' + i + '.png');
-  enemyRunLeftBack.push(texture);
-}
-const enemyRunRightBack = [];
-for (let i = 6; i >= 1; i--) {
-  const texture = PIXI.Texture.from(
-    './assets/enemy/runRight/enemy_r_' + i + '.png');
-  enemyRunRightBack.push(texture);
-}
-const enemyStaleLeft = [];
-enemyStaleLeft.push(PIXI.Texture.from(
-  './assets/enemy/runLeft/enemy_l_6.png'));
-const enemyStaleRight = [];
-enemyStaleRight.push(PIXI.Texture.from(
-  './assets/enemy/runRight/enemy_r_6.png'));
-
-const ammoLeftStyle = new PIXI.TextStyle({
-  fill: 'white',
-  fontFamily: 'Impact',
-  fontSize: 40,
-  stroke: 'white'
-});
-const reloadStyle = new PIXI.TextStyle({
-  fill: 'red',
-  fontFamily: 'Impact',
-  fontSize: 40,
-  stroke: 'white'
-});
-const ammoLeftText = new PIXI.Text('12 / 12', ammoLeftStyle);
-ammoLeftText.x = renderer.width / 10 * 9;
-ammoLeftText.y = renderer.height / 7 * 6;
-const reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
-reloadText.x = renderer.width / 10 * 5;
-reloadText.y = renderer.height / 7 * 6;
-reloadText.visible = false;
-
-// Add custom cursor styles
-renderer.plugins.interaction.cursorStyles.default = defaultIcon;
-
-// create a background
-const dungeon = new PIXI.Sprite(mapTexture);
-dungeon.scale.x = 2.7;
-dungeon.scale.y = 2.7;
-dungeon.position.x = 0;
-dungeon.position.y = 0;
-
-stageLevel.addChild(dungeon);
-
-// create a new Sprite using the texture
-const player = new PIXI.extras.AnimatedSprite(playerStaleRight);
-
-player.position.x = renderer.width / 4;
-player.position.y = renderer.height / 2;
-
-player.vx = 0;
-player.vy = 0;
-
-player.scale.x = 1.5;
-player.scale.y = 1.5;
-
-const gunTimeout = 10;
-player.shooting = false;
-player.shootingTimeout = gunTimeout;
-player.health = 100;
-player.isAlive = true;
-
-const playerState = {
-  idleRight: 0,
-  idleLeft: 1,
-  runRight: 2,
-  runLeft: 3,
-  runRightBack: 4,
-  runLeftBack: 5
-};
-player.state = playerState.idleRight;
-
-stageLevel.addChild(player);
-
-stageLevel.interactive = true;
-
-stageLevel.on('mousedown', _ => {
-  player.shooting = true;
-});
-
-stageLevel.on('mouseup', _ => {
-  player.shooting = false;
-  player.shootingTimeout = gunTimeout;
-});
+const gunTimeout = 10,
+  bulletAmount = 10,
+  bulletSpeed = 8,
+  reloadSpeed = 80,
+  bulletDamage = 20,
+  linearSpeed = 4,
+  playerState = {
+    idleRight: 0,
+    idleLeft: 1,
+    runRight: 2,
+    runLeft: 3,
+    runRightBack: 4,
+    runLeftBack: 5
+  },
+  left = keyboard('KeyA'),
+  up = keyboard('KeyW'),
+  right = keyboard('KeyD'),
+  down = keyboard('KeyS'),
+  reloadButton = keyboard('KeyR');
 
 class BulletPool {
   constructor(
@@ -364,22 +259,6 @@ class BulletPool {
   }
 }
 
-const bulletAmount = 10;
-const bulletSpeed = 8;
-const reloadSpeed = 80;
-const bulletDamage = 20;
-
-const playerBulletPool =
-  new BulletPool(
-    playerBulletTexture,
-    explosionOrangeTextures,
-    bulletAmount,
-    bulletSpeed,
-    bulletDamage,
-    reloadSpeed,
-    player
-  );
-
 class EnemyManager {
   constructor(
     enemyAmount,
@@ -499,36 +378,171 @@ class EnemyManager {
   }
 }
 
-const enemyManager = new EnemyManager(
-  5,
-  100,
-  5,
-  6,
-  20,
-  80);
+function setup() {
+  // dungeon sprite setup
+  dungeon = new PIXI.Sprite(
+    PIXI.utils.TextureCache['assets/levels/baseMap.png']);
+  dungeon.position.x = 0;
+  dungeon.position.y = 0;
 
-// character control
-const linearSpeed = 4;
+  let multiplier = 1.0, previousMultiplier = 1.0;
+  while (dungeon.width * multiplier <= renderer.width) {
+    console.log('multiplier: ' + multiplier +
+      '; prevMultiplier: ' +
+      previousMultiplier);
+    previousMultiplier = multiplier;
+    multiplier += 0.01;
+  }
+  dungeon.scale.x = previousMultiplier;
+  dungeon.scale.y = previousMultiplier;
+  stageLevel.addChild(dungeon);
+  console.log('made dungeon');
 
-const left = keyboard('KeyA'),
-  up = keyboard('KeyW'),
-  right = keyboard('KeyD'),
-  down = keyboard('KeyS'),
-  reloadButton = keyboard('KeyR');
+  // ammo text setup
+  const ammoLeftStyle = new PIXI.TextStyle({
+    fill: 'white',
+    fontFamily: 'Impact',
+    fontSize: 40,
+    stroke: 'white'
+  });
+  ammoLeftText = new PIXI.Text('12 / 12', ammoLeftStyle);
+  ammoLeftText.x = renderer.width / 10 * 9;
+  ammoLeftText.y = renderer.height / 7 * 6;
 
-left.press = () => player.vx -= linearSpeed;
-left.release = () => player.vx += linearSpeed;
+  // reload hint text setup
+  const reloadStyle = new PIXI.TextStyle({
+    fill: 'red',
+    fontFamily: 'Impact',
+    fontSize: 40,
+    stroke: 'white'
+  });
+  reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
+  reloadText.x = renderer.width / 10 * 5;
+  reloadText.y = renderer.height / 7 * 6;
+  reloadText.visible = false;
+  console.log('made texts');
 
-up.press = () => player.vy += linearSpeed;
-up.release = () => player.vy -= linearSpeed;
+  playerBulletTexture = new PIXI.Texture(
+    PIXI.utils.TextureCache['assets/bullet.png']);
+  enemyBulletTexture = new PIXI.Texture(
+    PIXI.utils.TextureCache['assets/bullet_enemy.png']);
 
-right.press = () => player.vx += linearSpeed;
-right.release = () => player.vx -= linearSpeed;
+  playerStaleLeft.push(PIXI.utils.TextureCache[
+    './assets/hero/runLeft/hero 6.png']);
+  playerStaleRight.push(PIXI.utils.TextureCache[
+    './assets/hero/runRight/hero 6.png']);
+  enemyStaleLeft.push(PIXI.utils.TextureCache[
+    './assets/enemy/runLeft/enemy_l_6.png']);
+  enemyStaleRight.push(PIXI.utils.TextureCache[
+    './assets/enemy/runRight/enemy_r_6.png']);
 
-down.press = () => player.vy -= linearSpeed;
-down.release = () => player.vy += linearSpeed;
+  for (let i = 1, j = 6; i <= 6; i++, j--) {
+    explosionOrangeTextures.push(
+      PIXI.utils.TextureCache[`./assets/explo_orange/explo_orange_${i}.png`]
+    );
+    explosionRedTextures.push(
+      PIXI.utils.TextureCache[`./assets/explo_red/explo_red_${i}.png`]
+    );
+    playerRunLeft.push(
+      PIXI.utils.TextureCache[`./assets/hero/runLeft/hero ${i}.png`]
+    );
+    playerRunRight.push(
+      PIXI.utils.TextureCache[`./assets/hero/runRight/hero ${i}.png`]
+    );
+    playerRunLeftBack.push(
+      PIXI.utils.TextureCache[`./assets/hero/runLeft/hero ${j}.png`]
+    );
+    playerRunRightBack.push(
+      PIXI.utils.TextureCache[`./assets/hero/runRight/hero ${j}.png`]
+    );
+    enemyRunLeft.push(
+      PIXI.utils.TextureCache[`./assets/enemy/runLeft/enemy_l_${i}.png`]
+    );
+    enemyRunRight.push(
+      PIXI.utils.TextureCache[`./assets/enemy/runRight/enemy_r_${i}.png`]
+    );
+    enemyRunLeftBack.push(
+      PIXI.utils.TextureCache[`./assets/enemy/runLeft/enemy_l_${j}.png`]
+    );
+    enemyRunRightBack.push(
+      PIXI.utils.TextureCache[`./assets/enemy/runRight/enemy_r_${j}.png`]
+    );
+  }
+  console.log('made all textures');
 
-reloadButton.press = () => playerBulletPool.reload();
+  // the player sprite
+  player = new PIXI.extras.AnimatedSprite(playerStaleRight);
+  player.position.x = renderer.width / 4;
+  player.position.y = renderer.height / 2;
+  player.vx = 0;
+  player.vy = 0;
+  player.scale.x = 1.5;
+  player.scale.y = 1.5;
+  player.shooting = false;
+  player.shootingTimeout = gunTimeout;
+  player.health = 100;
+  player.isAlive = true;
+  player.state = playerState.idleRight;
+  stageLevel.addChild(player);
+
+  playerBulletPool = new BulletPool(
+    playerBulletTexture,
+    explosionOrangeTextures,
+    bulletAmount,
+    bulletSpeed,
+    bulletDamage,
+    reloadSpeed,
+    player
+  );
+
+  enemyManager = new EnemyManager(
+    5,
+    100,
+    5,
+    6,
+    20,
+    80);
+
+  // creating a custom cursor-crosshair
+  const interaction = renderer.plugins.interaction;
+  interaction.cursorStyles['crosshair'] =
+    'url(\'./assets/utils/crosshair.cur\'),auto';
+  stageLevel.interactive = true;
+  stageLevel.cursor = 'crosshair';
+
+  stageLevel.on('mousedown', () => {
+    player.shooting = true;
+  });
+  stageLevel.on('mouseup', () => {
+    player.shooting = false;
+    player.shootingTimeout = gunTimeout;
+  });
+
+  // player control
+  left.press = () => player.vx -= linearSpeed;
+  left.release = () => player.vx += linearSpeed;
+  up.press = () => player.vy += linearSpeed;
+  up.release = () => player.vy -= linearSpeed;
+  right.press = () => player.vx += linearSpeed;
+  right.release = () => player.vx -= linearSpeed;
+  down.press = () => player.vy -= linearSpeed;
+  down.release = () => player.vy += linearSpeed;
+  reloadButton.press = () => playerBulletPool.reload();
+
+  // adding texts on the stage
+  stageLevel.addChild(ammoLeftText);
+  stageLevel.addChild(reloadText);
+
+  ScaleToWindow(renderer.view);
+  animate();
+}
+
+const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
+  playerRunningRight = new PIXI.extras.AnimatedSprite(playerRunRight),
+  playerRunningLeftBack = new PIXI.extras.AnimatedSprite(playerRunLeftBack),
+  playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
+playerRunningLeft.loop = true;
+playerRunningRight.loop = true;
 
 function MoveCreature(creature) {
   const creatureCollisions = contain(creature, dungeon);
@@ -605,12 +619,6 @@ function AnimatePlayer(mouseX) {
   return player;
 }
 
-stageLevel.addChild(ammoLeftText);
-stageLevel.addChild(reloadText);
-
-// start animating
-//ScaleToWindow(renderer.view);
-animate();
 function animate() {
   MoveCreature(player);
   playerBulletPool.updateBulletsSpeed();
