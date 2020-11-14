@@ -1,6 +1,8 @@
 export function ScaleToWindow(canvas, backgroundColor) {
   let center;
 
+  console.log(window.pageYOffset / window.innerHeight * 100);
+
   //1. Scale the canvas to the correct size
   //Figure out the scale amount on each axis
   const scaleX = window.innerWidth / canvas.offsetWidth;
