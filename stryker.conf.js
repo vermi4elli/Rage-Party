@@ -4,7 +4,7 @@
 module.exports = {
   packageManager: 'npm',
   reporters: ['html', 'clear-text', 'progress', 'dashboard'],
-  testRunner: 'command',
+  testRunner: 'jest',
   commandRunner: { command: 'npm run test' },
   coverageAnalysis: 'off',
 };
