@@ -13,7 +13,6 @@ const renderer =
 document.body.appendChild(renderer.view);
 
 window.addEventListener('resize', _ => {
-  console.log('resizing...');
   ScaleToWindow(renderer.view);
 });
 
@@ -163,8 +162,6 @@ class BulletPool {
         if (this.bulletPool[b].active &&
           (contain(this.bulletPool[b], dungeon).x !== collisionType.no ||
             contain(this.bulletPool[b], dungeon).y !== collisionType.no)) {
-          console.log('x col: ' + contain(this.bulletPool[b], dungeon).x +
-            '; y col: ' + contain(this.bulletPool[b], dungeon).y);
           this.bulletPool[b].visible = false;
 
           const explosion = new PIXI.extras.AnimatedSprite(explosionTextures);
@@ -280,16 +277,13 @@ function AnimatePlayer(mouseX) {
     y = player.y,
     half = (mouseX >= renderer.width / 2 ? 2 : 1);
 
-  console.log('im here');
   if (player.lastMouseHalf !== half) {
     if (mouseX >= player.x) {
       player = playerRunningRight;
       player.play();
-      console.log('right run');
     } else {
       player = playerRunningLeft;
       player.play();
-      console.log('left run');
     }
     // if (player.vx === 0 && player.vy === 0) {
     //   player = new PIXI.Sprite((mouseX >= player.x ?
@@ -300,8 +294,6 @@ function AnimatePlayer(mouseX) {
   player.x = x;
   player.y = y;
   player.lastMouseHalf = half;
-
-  console.log('passed this');
 
   return player;
 }
