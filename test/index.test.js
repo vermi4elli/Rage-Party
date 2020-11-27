@@ -1,10 +1,14 @@
 const { test, expect, describe, afterAll, afterEach } =
   require('@jest/globals');
-const { fastify } = require('../index');
+//const { fastify } = require('../index');
+const { start, close } = require('../index');
+
+start();
 
 describe('server test', () => {
   afterAll(() => {
-    fastify.close();
+    //fastify.close();
+    close();
   });
 
   test('responds with success on request /register', async done => {

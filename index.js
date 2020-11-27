@@ -18,7 +18,7 @@ fastify.get('/register', async (request, reply) => {
   reply.send({ a: 'hello' });
 });
 
-fastify.get('/error', async (request, reply) => {
+fastify.get('/error', async () => {
   throw new Error('error occurred!!!');
   //reply.send(new Error('error occurred!!!'));
 });
@@ -35,6 +35,11 @@ const start = async () => {
 };
 start();
 
+const close = async () => {
+  fastify.close();
+};
+
 module.exports = {
-  fastify
+  start,
+  close
 };
