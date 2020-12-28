@@ -2,25 +2,59 @@
 
 const fastify = require('fastify')({ logger: true });
 const path = require('path');
-const port = process.env.PORT || 3000;
+const port = /*process.env.PORT ||*/ 3000;
 const host = port === 3000 ? '127.0.0.1' : '0.0.0.0';
+// const db = require('./src/db/db');
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
   default: '/'
 });
 
-// Declare a route
-fastify.get('/', async (request, reply) =>
-  (reply.sendFile('index.html')));
-
-fastify.get('/register', async (request, reply) => {
-  reply.send({ a: 'hello' });
+const { Pool } = require('pg');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL + '?ssl=true',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-fastify.get('/error', async () => {
-  throw new Error('error occurred!!!');
-  //reply.send(new Error('error occurred!!!'));
+// Declare a route
+fastify.get('/', async (req, res) => (res.sendFile('index.html')));
+fastify.get('/scores', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    client.query('select name, score from scores;', (error, results) => {
+      if (error) {
+        throw error;
+      }
+      res.send(results.rows);
+    });
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send('Error ' + err);
+  }
+});
+fastify.post('/scores', async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const { name, score } = req.body;
+    client.query(
+      `insert into scores (name, score) VALUES (${1}, ${2})`,
+      [name, score],
+      (error, result) => {
+        if (error) {
+          throw error;
+        }
+        console.log('request', req);
+        res.status(200).send('User added');
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.send('Error ' + err);
+  }
 });
 
 // Run the server!
