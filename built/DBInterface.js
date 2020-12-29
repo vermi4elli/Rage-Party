@@ -30,14 +30,14 @@ const ScoresMongo = (db) => {
     return {
         getScoreByName: async (name) => {
             const collection = db.connection().collection('scores');
-            return collection.findOne({ name: name }).toArray();
+            return collection.findOne({ name: name });
         },
         getScores: async () => {
             const collection = db.connection().collection('scores');
-            return collection.find().toArray((err, results) => results);
+            return collection.find().toArray();
         },
         uploadScore: async (name, score) => {
-            return db.connection().insertOne({ name: name, score: score }, (err, result) => {
+            return db.connection().collection('scores').insertOne({ name: name, score: score }, (err, result) => {
                 if (err) {
                     return console.log(err);
                 }

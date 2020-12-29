@@ -40,18 +40,19 @@ export const ScoresMongo = (db: MongoConnection): Scores => {
     return {
         getScoreByName: async (name: string) => {
             const collection = db.connection().collection('scores');
-            return collection.findOne({name: name}).toArray();
+            return collection.findOne({name: name});
         },
         getScores: async () => {
             const collection = db.connection().collection('scores');
-            return collection.find().toArray((err: any, results: any) => results);
+            return collection.find().toArray();
         },
         uploadScore: async (name, score) => {
-            return db.connection().insertOne({name: name, score: score}, (err: any, result: any) => {
-                if(err){
-                    return console.log(err);
-                }
-                console.log(result.ops);
+            return db.connection().collection('scores').insertOne({name: name, score: score},
+                (err: any, result: any) => {
+                    if(err){
+                        return console.log(err);
+                    }
+                    console.log(result.ops);
             });
         }
     };

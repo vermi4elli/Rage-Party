@@ -5,11 +5,10 @@ const MongoClient = require('mongodb').MongoClient;
 require('dotenv').config();
 const uri = process.env.MONGO_DB_URL;
 const client = new MongoClient(uri, { useNewUrlParser: true });
-client.connect(() => {
-    const collection = client.db('jstrack').collection('scores');
-    client.close();
+client.connect()
+    .then(() => {
+    console.log('Connection to remote DB is working...');
 });
-client.connect();
 const createConnection = () => {
     return {
         connection: () => { return client.db('jstrack'); }
