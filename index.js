@@ -1,60 +1,38 @@
 'use strict';
 
+require('dotenv').config();
 const fastify = require('fastify')({ logger: true });
 const path = require('path');
-const port = /*process.env.PORT ||*/ 3000;
+const port = parseInt(process.env.PORT);
 const host = port === 3000 ? '127.0.0.1' : '0.0.0.0';
-// const db = require('./src/db/db');
+const db = require('./built/PostgresConnection');
+const DBInterface = require('./built/DBInterface');
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
   default: '/'
 });
 
-const { Pool } = require('pg');
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL + '?ssl=true',
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
 // Declare a route
 fastify.get('/', async (req, res) => (res.sendFile('index.html')));
 fastify.get('/scores', async (req, res) => {
-  try {
-    const client = await pool.connect();
-    client.query('select name, score from scores;', (error, results) => {
-      if (error) {
-        throw error;
-      }
-      res.send(results.rows);
-    });
-    client.release();
-  } catch (err) {
-    console.error(err);
-    res.send('Error ' + err);
-  }
+  const scores = await DBInterface.ScoresPostgres(db.createConnection())
+    .getScores();
+  res.status(200).send(scores);
 });
-fastify.post('/scores', async (req, res) => {
-  try {
-    const client = await pool.connect();
-    const { name, score } = req.body;
-    client.query(
-      `insert into scores (name, score) VALUES (${1}, ${2})`,
-      [name, score],
-      (error, result) => {
-        if (error) {
-          throw error;
-        }
-        console.log('request', req);
-        res.status(200).send('User added');
-      }
-    );
-  } catch (err) {
-    console.error(err);
-    res.send('Error ' + err);
-  }
+fastify.get('/scores/:name', async (req, res) => {
+  const { name } = req.body;
+  console.log('Name is: ' + name);
+  const score = await DBInterface.ScoresPostgres(db.createConnection())
+    .getScoreByName(name);
+  res.status(200).send(score);
+});
+fastify.post('/upload/:score', async (req, res) => {
+  const { name, score } = req.body;
+  console.log('Name is: ' + name + '; Score is: ' + score);
+  const answer = await DBInterface.ScoresPostgres(db.createConnection())
+    .uploadScore(name, score);
+  res.status(200).send('Score added: ' + answer);
 });
 
 // Run the server!
