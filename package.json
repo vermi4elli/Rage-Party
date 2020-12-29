@@ -63,8 +63,9 @@
     "dotenv": "^8.2.0",
     "fastify": "^3.5.1",
     "fastify-static": "^3.2.1",
-    "pg": "^8.5.1",
     "mongodb": "^3.6.3",
+    "pg": "^8.5.1",
+    "pixi-sound": "^2.0.0-alpha.6",
     "pixi.js": "^4.8.9",
     "source-map-loader": "^2.0.0",
     "ts-loader": "^8.0.12"

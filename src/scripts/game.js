@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import { ScaleToWindow } from './scaleWindow';
 import { keyboard } from './keyboard';
 import { checkCollision, collisionType, contain } from './contain';
+import sound from 'pixi-sound';
 
 const renderer =
   PIXI.autoDetectRenderer({
@@ -32,6 +33,7 @@ for (let i = 1, j = 6; i <= 6; i++, j--) {
 
 const loader = new PIXI.loaders.Loader();
 loader.add(textures);
+loader.add('playerShot', './assets/laser_player.mp3');
 loader.onComplete.add(setup);
 loader.load();
 
@@ -240,14 +242,28 @@ class BulletPool {
       bullet.position.y = this.sourceSprite.y + this.sourceSprite.height / 3;
 
       bullet.active = true;
+
+      if (this.sourceSprite === player) {
+        sound.play('playerShot', {
+          loop: false,
+          speed: 3,
+          volume: 0.3
+        });
+      }
     } else if (autoReload &&
       this.bulletsLeft === 0 &&
       !this.isReloading) {
+      if (this.sourceSprite === player) {
+        sound.stop('playerShot');
+      }
       this.reload();
     } else if (!this.isReloading &&
       this.bulletsLeft === 0 &&
       this.sourceSprite === player
     ) {
+      if (this.sourceSprite === player) {
+        sound.stop('playerShot');
+      }
       reloadText.text = 'PRESS \'R\' TO RELOAD';
       reloadText.visible = true;
     }
