@@ -9,10 +9,10 @@ type Scores = {
     uploadScore: (name: string, score: number) => void
 };
 
-const getScoreByName = (name: string) => `select score from scores where name = ${name};`;
+const getScoreByName = (name: string) => `select score from scores where name = \'${name}\';`;
 const getScores = () => 'select name, score from scores;';
 const uploadScore = (name: string, score: number) =>
-    `insert into scores (name, score) VALUES (${name}, ${score})`;
+    `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
 
 export const ScoresPostgres = (db: PostgresConnection): Scores => {
     return {

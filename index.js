@@ -21,15 +21,13 @@ fastify.get('/scores', async (req, res) => {
   res.status(200).send(scores);
 });
 fastify.get('/scores/:name', async (req, res) => {
-  const { name } = req.body;
-  console.log('Name is: ' + name);
+  const name = req.query.name;
   const score = await DBInterface.ScoresPostgres(db.createConnection())
     .getScoreByName(name);
   res.status(200).send(score);
 });
 fastify.post('/upload/:score', async (req, res) => {
-  const { name, score } = req.body;
-  console.log('Name is: ' + name + '; Score is: ' + score);
+  const { name, score } = req.query;
   const answer = await DBInterface.ScoresPostgres(db.createConnection())
     .uploadScore(name, score);
   res.status(200).send('Score added: ' + answer);
