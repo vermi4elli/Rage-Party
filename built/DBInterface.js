@@ -1,26 +1,24 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScoresMongo = exports.ScoresPostgres = void 0;
-const getScoreByName = (name) => `select name, score from scores where name = \'${name}\';`;
-const getScores = () => 'select name, score from scores;';
-const uploadScore = (name, score) => `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
+const queries = require("./Queries");
 const ScoresPostgres = (db) => {
     return {
         getScoreByName: async (name) => {
             return db.connection()
-                .query(getScoreByName(name))
+                .query(queries.getScoreByName(name))
                 .then((result) => result)
                 .catch((err) => console.log(err));
         },
         getScores: async () => {
             return db.connection()
-                .query(getScores())
+                .query(queries.getScores())
                 .then((result) => result)
                 .catch((err) => console.log(err));
         },
         uploadScore: async (name, score) => {
             return db.connection()
-                .query(uploadScore(name, score))
+                .query(queries.uploadScore(name, score))
                 .catch((err) => console.log(err));
         }
     };
