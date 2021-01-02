@@ -1,7 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScoresMongo = exports.ScoresPostgres = void 0;
-const getScoreByName = (name) => `select score from scores where name = \'${name}\';`;
+const getScoreByName = (name) => `select name, score from scores where name = \'${name}\';`;
 const getScores = () => 'select name, score from scores;';
 const uploadScore = (name, score) => `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
 const ScoresPostgres = (db) => {

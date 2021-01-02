@@ -3,16 +3,17 @@
 import {PostgresConnection} from './PostgresConnection';
 import {MongoConnection} from './MongoConnection';
 
+type Score = Record<string, number>
+
 type Scores = {
-    getScoreByName: (name: string) => Promise<JSON>,
-    getScores: () => Promise<JSON>,
+    getScoreByName: (name: string) => Promise<Score>,
+    getScores: () => Promise<Score>,
     uploadScore: (name: string, score: number) => void
 };
 
-const getScoreByName = (name: string) => `select score from scores where name = \'${name}\';`;
+const getScoreByName = (name: string) => `select name, score from scores where name = \'${name}\';`;
 const getScores = () => 'select name, score from scores;';
-const uploadScore = (name: string, score: number) =>
-    `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
+const uploadScore = (name: string, score: number) => `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
 
 export const ScoresPostgres = (db: PostgresConnection): Scores => {
     return {
@@ -28,7 +29,7 @@ export const ScoresPostgres = (db: PostgresConnection): Scores => {
                 .then((result: JSON) => result)
                 .catch((err: Error) => console.log(err));
         },
-        uploadScore: async (name, score) => {
+        uploadScore: async (name: string, score: number) => {
             return db.connection()
                 .query(uploadScore(name, score))
                 .catch((err: Error) => console.log(err));
@@ -46,7 +47,7 @@ export const ScoresMongo = (db: MongoConnection): Scores => {
             const collection = db.connection().collection('scores');
             return collection.find().toArray();
         },
-        uploadScore: async (name, score) => {
+        uploadScore: async (name: string, score: number) => {
             return db.connection().collection('scores').insertOne({name: name, score: score},
                 (err: any, result: any) => {
                     if(err){
