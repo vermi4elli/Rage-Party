@@ -6,7 +6,7 @@ const path = require('path');
 const port = parseInt(process.env.PORT);
 const host = port === 3000 ? '127.0.0.1' : '0.0.0.0';
 const db = require('./built/PostgresConnection');
-const { ScoresPostgres: DBInterface } = require('./built/DBInterface');
+const DBInterface = require('./built/ScoresPostgres');
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
@@ -16,19 +16,22 @@ fastify.register(require('fastify-static'), {
 // Declare a route
 fastify.get('/', async (req, res) => (res.sendFile('index.html')));
 fastify.get('/scores', async (req, res) => {
-  const scores = await DBInterface(db.createConnection())
+  const scores = await DBInterface
+    .DBScores(db.createConnection())
     .getScores();
   res.status(200).send(scores);
 });
 fastify.get('/scores/:name', async (req, res) => {
   const name = req.query.name;
-  const score = await DBInterface(db.createConnection())
+  const score = await DBInterface
+    .DBScores(db.createConnection())
     .getScoreByName(name);
   res.status(200).send(score);
 });
 fastify.post('/upload/:score', async (req, res) => {
   const { name, score } = req.query;
-  const answer = await DBInterface(db.createConnection())
+  const answer = await DBInterface
+    .DBScores(db.createConnection())
     .uploadScore(name, score);
   res.status(200).send('Score added: ' + answer);
 });

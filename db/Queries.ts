@@ -1,5 +1,15 @@
 'use strict';
 
-export const getScoreByName = (name: string) => `select name, score from scores where name = \'${name}\';`;
+export const getScoreByName = (name: string) => {
+    return {
+        text: 'select name, score from scores where name = $1',
+        values: [name]
+    };
+};
 export const getScores = () => 'select name, score from scores;';
-export const uploadScore = (name: string, score: number) => `insert into scores (name, score) VALUES (\'${name}\', ${score})`;
+export const uploadScore = (name: string, score: number) => {
+    return {
+        text: 'insert into scores (name, score) VALUES ($1, $2)',
+        values: [name, score]
+    };
+};
