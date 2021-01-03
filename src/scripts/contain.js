@@ -19,7 +19,7 @@ export function contain(sprite,
   };
 
   //Left
-  if (container.x >= sprite.x - offsetX * offsetPercentage) {
+  if (container.position.x >= sprite.position.x - offsetX * offsetPercentage) {
     collision.x = collisionType.left;
   }
 

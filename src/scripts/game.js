@@ -105,7 +105,8 @@ const gunTimeout = 10,
   reloadSpeed = 80,
   bulletDamage = 20,
   linearSpeed = 4,
-  playerState = {
+  linearEnemySpeed = 2,
+  animationState = {
     idleRight: 0,
     idleLeft: 1,
     runRight: 2,
@@ -341,6 +342,7 @@ class EnemyManager {
     this.Freezer1 = 80;
     this.Freezer2 = 80;
     this.Freezer3 = 150;
+    this.FreezerVelocityChange = 150;
 
     this.wave = 1;
     this.enemyAmount = 1;
@@ -354,13 +356,15 @@ class EnemyManager {
   SpawnWave() {
     this.enemies = [];
 
+    player.position.x = renderer.width / 4;
+    player.position.y = renderer.height / 2;
+
     this.enemyAmount *= Math.floor(this.wave > 3 ?
       (this.wave > 10 ?
-        1.2 :
-        1.5) :
-      2);
+        1.1 :
+        1.25) :
+      1.4);
     this.enemyHealth += this.wave * 1.2;
-    console.log('enemyHealth: ' + this.enemyHealth);
     for (let i = 0; i < this.enemyAmount; i++) this.SpawnEnemy(
       this.enemyHealth,
       this.enemyBulletAmount,
@@ -392,11 +396,12 @@ class EnemyManager {
       (renderer.width - (player.x + 300 - dungeon.x) - 120);
     enemyTemp.position.y = dungeon.y + 90 + Math.random() *
       (renderer.height - 270);
-    console.log('h: ' + renderer.height + '; w: ' + renderer.width +
-      '; eX: ' + enemyTemp.x + '; eY: ' + enemyTemp.y);
     enemyTemp.scale.x = 1.5;
     enemyTemp.scale.y = 1.5;
     enemyTemp.visible = true;
+    enemyTemp.vx = 0;
+    enemyTemp.vy = 0;
+    enemyTemp.state = animationState.idleLeft;
     botLevel.addChild(enemyTemp);
 
     const enemyBulletPool = new BulletPool(
@@ -413,7 +418,8 @@ class EnemyManager {
       enemy: enemyTemp,
       enemyHealth,
       enemyBulletPool,
-      shootingTimeout: 0
+      shootingTimeout: 0,
+      moveChangeFreezer: this.FreezerVelocityChange
     };
 
     this.enemies.push(enemyStruct);
@@ -454,8 +460,19 @@ class EnemyManager {
               ++this.enemies[i].shootingTimeout;
             }
           }
-        }
 
+          if (this.enemies[i].moveChangeFreezer > 0) {
+            this.enemies[i].moveChangeFreezer--;
+          } else {
+            this.enemies[i].enemy.vx = (Math.random() * 10 > 5 ? 1 : -1) *
+              linearEnemySpeed;
+            this.enemies[i].enemy.vy = (Math.random() * 10 > 5 ? 1 : -1) *
+              linearEnemySpeed;
+            this.enemies[i].moveChangeFreezer = this.FreezerVelocityChange;
+          }
+          MoveCreature(this.enemies[i].enemy);
+          this.Animate(this.enemies[i].enemy);
+        }
       }
     } else {
       if (!this.waveFreezer1Done) {
@@ -526,6 +543,62 @@ class EnemyManager {
 
       // updating this enemies bullets even if the enemy is dead
       this.enemies[i].enemyBulletPool.updateBulletsSpeed();
+    }
+  }
+
+  Animate(enemy) {
+    const half = (player.x >= enemy.x ? 2 : 1),
+      moving = enemy.vx !== 0 || enemy.vy !== 0;
+    const newState = (moving ?
+      (half === 2 ?
+        (enemy.vx >= 0 ?
+          animationState.runRight :
+          animationState.runRightBack) :
+        (enemy.vx < 0 ?
+          animationState.runLeft :
+          animationState.runLeftBack)
+      ) :
+      (half === 2 ? animationState.idleRight : animationState.idleLeft));
+
+    if (enemy.state !== newState) {
+      switch (newState) {
+      case animationState.idleRight:
+        enemy.textures = this.enemyRightStaleTexture;
+        enemy.loop = true;
+        enemy.play();
+        break;
+      case animationState.idleLeft:
+        enemy.textures = this.enemyLeftStaleTexture;
+        enemy.loop = true;
+        enemy.play();
+        break;
+      case animationState.runRight:
+        enemy.textures = this.enemyRightRunTexture;
+        enemy.loop = true;
+        enemy.animationSpeed = 0.1;
+        enemy.play();
+        break;
+      case animationState.runLeft:
+        enemy.textures = this.enemyLeftRunTexture;
+        enemy.loop = true;
+        enemy.animationSpeed = 0.1;
+        enemy.play();
+        break;
+      case animationState.runRightBack:
+        enemy.textures = this.enemyRightBackRunTexture;
+        enemy.loop = true;
+        enemy.animationSpeed = 0.1;
+        enemy.play();
+        break;
+      case animationState.runLeftBack:
+        enemy.textures = this.enemyLeftBackRunTexture;
+        enemy.loop = true;
+        enemy.animationSpeed = 0.1;
+        enemy.play();
+        break;
+      }
+
+      enemy.state = newState;
     }
   }
 
@@ -631,16 +704,12 @@ function setup() {
 
   let multiplier = 1.0, previousMultiplier = 1.0;
   while (dungeon.width * multiplier <= renderer.width) {
-    console.log('multiplier: ' + multiplier +
-      '; prevMultiplier: ' +
-      previousMultiplier);
     previousMultiplier = multiplier;
     multiplier += 0.01;
   }
   dungeon.scale.x = previousMultiplier;
   dungeon.scale.y = previousMultiplier;
   botLevel.addChild(dungeon);
-  console.log('made dungeon');
 
   // ammo text setup
   const ammoLeftStyle = new PIXI.TextStyle({
@@ -664,7 +733,6 @@ function setup() {
   reloadText.x = renderer.width / 10 * 5;
   reloadText.y = renderer.height / 7 * 6;
   reloadText.visible = false;
-  console.log('made texts');
 
   playerBulletTexture = new PIXI.Texture(
     PIXI.utils.TextureCache['./assets/bullet.png']);
@@ -712,7 +780,6 @@ function setup() {
       PIXI.utils.TextureCache[`./assets/enemy/runRight/enemy_r_${j}.png`]
     );
   }
-  console.log('made all textures');
 
   // the player sprite
   player = new PIXI.extras.AnimatedSprite(playerStaleRight);
@@ -726,7 +793,7 @@ function setup() {
   player.shootingTimeout = gunTimeout;
   player.health = 100;
   player.isAlive = true;
-  player.state = playerState.idleRight;
+  player.state = animationState.idleRight;
   botLevel.addChild(player);
 
   playerBulletPool = new BulletPool(
@@ -784,26 +851,13 @@ function setup() {
   down.release = () => player.vy += linearSpeed;
   reloadButton.press = () => playerBulletPool.reload();
 
-  console.log('ready to animate');
-
   animate();
 }
-
-const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
-  playerRunningRight = new PIXI.extras.AnimatedSprite(playerRunRight),
-  playerRunningLeftBack = new PIXI.extras.AnimatedSprite(playerRunLeftBack),
-  playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
-playerRunningLeft.loop = true;
-playerRunningRight.loop = true;
 
 function ResetLevel() {
   botLevel.removeChildren();
 
   botLevel.addChild(dungeon);
-  ammoLeftText.text = '12 / 12';
-  reloadText.visible = false;
-  botLevel.addChild(ammoLeftText);
-  botLevel.addChild(reloadText);
 
   player = new PIXI.extras.AnimatedSprite(playerStaleRight);
   player.position.x = renderer.width / 4;
@@ -816,7 +870,7 @@ function ResetLevel() {
   player.shootingTimeout = gunTimeout;
   player.health = 100;
   player.isAlive = true;
-  player.state = playerState.idleRight;
+  player.state = animationState.idleRight;
   botLevel.addChild(player);
 
   playerBulletPool = new BulletPool(
@@ -828,6 +882,11 @@ function ResetLevel() {
     reloadSpeed,
     player
   );
+
+  ammoLeftText.text = '12 / 12';
+  reloadText.visible = false;
+  botLevel.addChild(ammoLeftText);
+  botLevel.addChild(reloadText);
 
   enemyManager = new EnemyManager(
     5,
@@ -915,13 +974,19 @@ function MoveCreature(creature) {
     ((creatureCollisions.x === collisionType.left) && (creature.vx >= 0)) ||
     ((creatureCollisions.x === collisionType.right) && (creature.vx <= 0))
   ) {
-    creature.x += creature.vx;
+    if (creature !== player) {
+      console.log('moving enemy x');
+    }
+    creature.position.x += creature.vx;
   }
   if (creatureCollisions.y === collisionType.no ||
     ((creatureCollisions.y === collisionType.top) && (creature.vy <= 0)) ||
     ((creatureCollisions.y === collisionType.down) && (creature.vy >= 0))
   ) {
-    creature.y -= creature.vy;
+    if (creature !== player) {
+      console.log('moving enemy y');
+    }
+    creature.position.y -= creature.vy;
   }
 }
 
@@ -931,45 +996,45 @@ function AnimatePlayer(mouseX) {
   const newState = (moving ?
     (half === 2 ?
       (player.vx >= 0 ?
-        playerState.runRight :
-        playerState.runRightBack) :
+        animationState.runRight :
+        animationState.runRightBack) :
       (player.vx < 0 ?
-        playerState.runLeft :
-        playerState.runLeftBack)
+        animationState.runLeft :
+        animationState.runLeftBack)
     ) :
-    (half === 2 ? playerState.idleRight : playerState.idleLeft));
+    (half === 2 ? animationState.idleRight : animationState.idleLeft));
 
   if (player.state !== newState) {
     switch (newState) {
-    case playerState.idleRight:
+    case animationState.idleRight:
       player.textures = playerStaleRight;
       player.loop = true;
       player.play();
       break;
-    case playerState.idleLeft:
+    case animationState.idleLeft:
       player.textures = playerStaleLeft;
       player.loop = true;
       player.play();
       break;
-    case playerState.runRight:
+    case animationState.runRight:
       player.textures = playerRunRight;
       player.loop = true;
       player.animationSpeed = 0.1;
       player.play();
       break;
-    case playerState.runLeft:
+    case animationState.runLeft:
       player.textures = playerRunLeft;
       player.loop = true;
       player.animationSpeed = 0.1;
       player.play();
       break;
-    case playerState.runRightBack:
+    case animationState.runRightBack:
       player.textures = playerRunRightBack;
       player.loop = true;
       player.animationSpeed = 0.1;
       player.play();
       break;
-    case playerState.runLeftBack:
+    case animationState.runLeftBack:
       player.textures = playerRunLeftBack;
       player.loop = true;
       player.animationSpeed = 0.1;
@@ -1018,15 +1083,11 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-module.exports = {
+export const result = {
   stageLevel: botLevel,
   player,
   playerBulletPool,
   dungeon,
-  playerRunningRight,
-  playerRunningLeft,
-  playerRunningLeftBack,
-  playerRunningRightBack,
   renderer,
   AnimatePlayer
 };
