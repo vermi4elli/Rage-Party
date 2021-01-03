@@ -17,6 +17,24 @@ window.addEventListener('resize', () => {
   ScaleToWindow(renderer.view);
 });
 
+const stageLevel = new PIXI.Container();
+const loadingScreen = new PIXI.Container();
+const deathScreen = new PIXI.Container();
+
+const loadingStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 80,
+  stroke: 'white'
+});
+const loadingText = new PIXI.Text('LOADING...', loadingStyle);
+loadingText.x = renderer.width / 4 * 1.5;
+loadingText.y = renderer.height / 4 * 1.5;
+loadingText.visible = true;
+loadingScreen.interactive = false;
+loadingScreen.addChild(loadingText);
+renderer.render(loadingScreen);
+
 // the sprites array
 const textures = [
   'assets/bullet.png',
@@ -59,8 +77,6 @@ const explosionOrangeTextures = [],
   enemyRunRightBack = [],
   enemyStaleLeft = [],
   enemyStaleRight = [];
-
-const stageLevel = new PIXI.Container();
 
 const gunTimeout = 10,
   bulletAmount = 10,
@@ -636,25 +652,33 @@ function AnimatePlayer(mouseX) {
 }
 
 function animate() {
-  MoveCreature(player);
   playerBulletPool.updateBulletsSpeed();
   enemyManager.Execute();
 
-  if (player.shooting) {
-    if (player.shootingTimeout === gunTimeout) {
-      player.shootingTimeout = 0;
-      playerBulletPool.shoot(
-        renderer.plugins.interaction.mouse.global.x,
-        renderer.plugins.interaction.mouse.global.y,
-        false
-      );
+  if (player.isAlive) {
+    MoveCreature(player);
+
+    if (player.shooting) {
+      if (player.shootingTimeout === gunTimeout) {
+        player.shootingTimeout = 0;
+        playerBulletPool.shoot(
+          renderer.plugins.interaction.mouse.global.x,
+          renderer.plugins.interaction.mouse.global.y,
+          false
+        );
+      }
+      ++player.shootingTimeout;
     }
-    ++player.shootingTimeout;
+    AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
+  } else {
+    reloadText.visible = false;
+    ammoLeftText.visible = false;
   }
-  AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
 
   // render the container
-  renderer.render(stageLevel);
+  if (player.isAlive) {
+    renderer.render(stageLevel);
+  }
 
   requestAnimationFrame(animate);
 }
