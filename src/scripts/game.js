@@ -73,6 +73,8 @@ let player,
   dungeon,
   ammoLeftText,
   reloadText,
+  waveText,
+  waveCountdown,
   playerBulletPool,
   enemyManager,
   playerBulletTexture,
@@ -334,6 +336,10 @@ class EnemyManager {
     this.enemyBulletDamage = enemyBulletDamage;
     this.enemyReloadSpeed = enemyReloadSpeed;
 
+    this.Freezer1 = 80;
+    this.Freezer2 = 80;
+    this.Freezer3 = 150;
+
     this.wave = 1;
     this.enemyAmount = 1;
     this.enemyHealth = player.health;
@@ -361,6 +367,13 @@ class EnemyManager {
       this.enemyReloadSpeed
     );
     this.enemiesLeft = this.enemyAmount;
+
+    this.waveFreezer1Countdown = this.Freezer1;
+    this.waveFreezer2Countdown = this.Freezer2;
+    this.waveFreezer3Countdown = this.Freezer3;
+
+    this.waveFreezer1Done = false;
+    this.waveFreezer2Done = false;
   }
 
   SpawnEnemy(
@@ -373,8 +386,8 @@ class EnemyManager {
     const enemyTemp = new PIXI.extras.AnimatedSprite(
       this.enemyLeftStaleTexture
     );
-    enemyTemp.position.x = player.x + 100 + Math.random() *
-      (renderer.width - (player.x + 100 - dungeon.x) - 120);
+    enemyTemp.position.x = player.x + 300 + Math.random() *
+      (renderer.width - (player.x + 300 - dungeon.x) - 120);
     enemyTemp.position.y = dungeon.y + 90 + Math.random() *
       (renderer.height - 270);
     console.log('h: ' + renderer.height + '; w: ' + renderer.width +
@@ -443,10 +456,42 @@ class EnemyManager {
 
       }
     } else {
-      // WaveCleared();
-      this.Clear();
-      this.wave += 1;
-      this.SpawnWave();
+      if (!this.waveFreezer1Done) {
+        WaveCleared(this.wave, 1);
+        this.Clear();
+        this.waveFreezer1Done = true;
+      }
+      if (this.waveFreezer1Countdown === 0) {
+        if (!this.waveFreezer2Done) {
+          this.wave += 1;
+          WaveCleared(this.wave, 2);
+          this.waveFreezer2Done = true;
+        }
+        if (this.waveFreezer2Countdown === 0) {
+          if (this.waveFreezer3Countdown / 50 === 3) {
+            WaveCleared(this.wave, 3);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown / 50 > 2) {
+            WaveCleared(this.wave, 7);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown / 50 === 2) {
+            WaveCleared(this.wave, 4);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown / 50 > 1) {
+            WaveCleared(this.wave, 7);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown / 50 === 1) {
+            WaveCleared(this.wave, 5);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown / 50 > 0) {
+            WaveCleared(this.wave, 7);
+            this.waveFreezer3Countdown--;
+          } else if (this.waveFreezer3Countdown === 0) {
+            WaveCleared(this.wave, 6);
+            this.SpawnWave();
+          } else this.waveFreezer3Countdown--;
+        } else this.waveFreezer2Countdown--;
+      } else this.waveFreezer1Countdown--;
     }
 
     // updating the enemies bullets
@@ -747,6 +792,73 @@ const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
   playerRunningRightBack = new PIXI.extras.AnimatedSprite(playerRunRightBack);
 playerRunningLeft.loop = true;
 playerRunningRight.loop = true;
+
+function WaveCleared(wave, step) {
+  const waveTextStyle = new PIXI.TextStyle({
+    fill: 'white',
+    fontFamily: 'Impact',
+    fontSize: 100,
+    stroke: 'white'
+  });
+  const waveCountdownStyle = new PIXI.TextStyle({
+    fill: 'white',
+    fontFamily: 'Impact',
+    fontSize: 200,
+    stroke: 'white'
+  });
+  switch (step) {
+  case 1: {
+    waveText = new PIXI.Text('WAVE ' + wave + ' CLEARED', waveTextStyle);
+    waveText.anchor.set(0.5);
+    waveText.x = renderer.width / 2;
+    waveText.y = renderer.height / 2.5;
+    waveText.visible = true;
+
+    botLevel.addChild(waveText);
+
+    break;
+  }
+  case 2: {
+    waveText.text = 'WAVE ' + wave + ' STARTING...';
+    break;
+  }
+  case 3: {
+    waveText.visible = false;
+    botLevel.removeChild(waveText);
+
+    waveCountdown = new PIXI.Text('3', waveCountdownStyle);
+    waveCountdown.anchor.set(0.5);
+    waveCountdown.scale.x = 1;
+    waveCountdown.scale.y = 1;
+    waveCountdown.x = renderer.width / 2;
+    waveCountdown.y = renderer.height / 2;
+    waveCountdown.visible = true;
+    botLevel.addChild(waveCountdown);
+    break;
+  }
+  case 4: {
+    waveCountdown.scale.x = 1;
+    waveCountdown.scale.y = 1;
+    waveCountdown.text = '2';
+    break;
+  }
+  case 5: {
+    waveCountdown.scale.x = 1;
+    waveCountdown.scale.y = 1;
+    waveCountdown.text = '1';
+    break;
+  }
+  case 6: {
+    waveCountdown.visible = false;
+    botLevel.removeChild(waveCountdown);
+    break;
+  }
+  case 7: {
+    waveCountdown.scale.x -= 0.017;
+    waveCountdown.scale.y -= 0.017;
+  }
+  }
+}
 
 function MoveCreature(creature) {
   const creatureCollisions = contain(creature, dungeon);
