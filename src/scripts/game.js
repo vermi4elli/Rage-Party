@@ -17,9 +17,19 @@ window.addEventListener('resize', () => {
   ScaleToWindow(renderer.view);
 });
 
+const GAME_STATES = {
+  mainMenu: 0,
+  botLevel: 1,
+  deathScreen: 2,
+  scoreScreen: 3
+};
+
+let gameState = GAME_STATES.mainMenu;
+
 const stageLevel = new PIXI.Container();
 const loadingScreen = new PIXI.Container();
 const deathScreen = new PIXI.Container();
+const mainMenuScreen = new PIXI.Container();
 
 const loadingStyle = new PIXI.TextStyle({
   fill: 'white',
@@ -37,9 +47,9 @@ renderer.render(loadingScreen);
 
 // the sprites array
 const textures = [
-  'assets/bullet.png',
-  'assets/bullet_enemy.png',
-  'assets/levels/baseMap.png'];
+  './assets/bullet.png',
+  './assets/bullet_enemy.png',
+  './assets/levels/baseMap.png'];
 for (let i = 1, j = 6; i <= 6; i++, j--) {
   textures.push(`./assets/explo_orange/explo_orange_${i}.png`);
   textures.push(`./assets/explo_red/explo_red_${i}.png`);
@@ -48,6 +58,10 @@ for (let i = 1, j = 6; i <= 6; i++, j--) {
   textures.push(`./assets/enemy/runLeft/enemy_l_${i}.png`);
   textures.push(`./assets/enemy/runRight/enemy_r_${i}.png`);
 }
+textures.push('./assets/restart_button.png');
+textures.push('./assets/exit_button.png');
+textures.push('./assets/start_button.png');
+textures.push('./assets/score_button.png');
 
 const loader = new PIXI.loaders.Loader();
 loader.add(textures);
@@ -62,7 +76,12 @@ let player,
   playerBulletPool,
   enemyManager,
   playerBulletTexture,
-  enemyBulletTexture;
+  enemyBulletTexture,
+  startButton,
+  restartButton,
+  exitButton,
+  scoreButton;
+
 const explosionOrangeTextures = [],
   explosionRedTextures = [],
   playerRunLeft = [],
@@ -396,10 +415,7 @@ class EnemyManager {
 
           // check if the player is killed after the shot
           if (player.health <= 0) {
-            player.active = false;
-            player.visible = false;
             player.isAlive = false;
-            stageLevel.removeChild(player);
           }
         }
       }
@@ -411,9 +427,68 @@ class EnemyManager {
 }
 
 function setup() {
+  const buttonX = renderer.width / 4 * 1.4,
+    buttonY = renderer.height / 4,
+    offsetY = renderer.height / 3;
+
+  restartButton = new PIXI.Sprite(
+    PIXI.utils.TextureCache['./assets/restart_button.png']);
+  restartButton.x = buttonX;
+  restartButton.y = buttonY;
+  restartButton.buttonMode = true;
+  restartButton.interactive = true;
+  restartButton.visible = true;
+  restartButton.on('pointerdown', () => {
+    gameState = GAME_STATES.botLevel;
+
+    player.isAlive = true;
+    player.health = 100;
+  });
+
+  exitButton = new PIXI.Sprite(
+    PIXI.utils.TextureCache['./assets/exit_button.png']);
+  exitButton.x = buttonX;
+  exitButton.y = buttonY + offsetY;
+  exitButton.buttonMode = true;
+  exitButton.interactive = true;
+  exitButton.visible = true;
+  exitButton.on('pointerdown', () => {
+    gameState = GAME_STATES.mainMenu;
+  });
+
+  startButton = new PIXI.Sprite(
+    PIXI.utils.TextureCache['./assets/start_button.png']);
+  startButton.x = buttonX;
+  startButton.y = buttonY;
+  startButton.buttonMode = true;
+  startButton.interactive = true;
+  startButton.visible = true;
+  startButton.on('pointerdown', () => {
+    gameState = GAME_STATES.botLevel;
+  });
+
+  scoreButton = new PIXI.Sprite(
+    PIXI.utils.TextureCache['./assets/score_button.png']);
+  scoreButton.x = buttonX;
+  scoreButton.y = buttonY + offsetY;
+  scoreButton.buttonMode = true;
+  scoreButton.interactive = true;
+  scoreButton.visible = true;
+  scoreButton.on('pointerdown', () => {
+    gameState = GAME_STATES.scoreScreen;
+  });
+
+  // adding the buttons to the death screen
+  deathScreen.addChild(restartButton);
+  deathScreen.addChild(exitButton);
+
+  // adding the buttons to the main menu screen
+  mainMenuScreen.addChild(startButton);
+  mainMenuScreen.addChild(scoreButton);
+
   // dungeon sprite setup
   dungeon = new PIXI.Sprite(
-    PIXI.utils.TextureCache['assets/levels/baseMap.png']);
+    PIXI.utils.TextureCache['./assets/levels/baseMap.png']);
   dungeon.position.x = 0;
   dungeon.position.y = 0;
 
@@ -455,9 +530,9 @@ function setup() {
   console.log('made texts');
 
   playerBulletTexture = new PIXI.Texture(
-    PIXI.utils.TextureCache['assets/bullet.png']);
+    PIXI.utils.TextureCache['./assets/bullet.png']);
   enemyBulletTexture = new PIXI.Texture(
-    PIXI.utils.TextureCache['assets/bullet_enemy.png']);
+    PIXI.utils.TextureCache['./assets/bullet_enemy.png']);
 
   playerStaleLeft.push(PIXI.utils.TextureCache[
     './assets/hero/runLeft/hero 6.png']);
@@ -542,13 +617,20 @@ function setup() {
   stageLevel.interactive = true;
   stageLevel.cursor = 'crosshair';
 
-  stageLevel.on('mousedown', () => {
+  stageLevel.on('pointerdown', () => {
     player.shooting = true;
   });
-  stageLevel.on('mouseup', () => {
+  stageLevel.on('pointerup', () => {
     player.shooting = false;
     player.shootingTimeout = gunTimeout;
   });
+
+
+  // adding texts on the stage
+  stageLevel.addChild(ammoLeftText);
+  stageLevel.addChild(reloadText);
+
+  ScaleToWindow(renderer.view);
 
   // player control
   left.press = () => player.vx -= linearSpeed;
@@ -561,11 +643,8 @@ function setup() {
   down.release = () => player.vy += linearSpeed;
   reloadButton.press = () => playerBulletPool.reload();
 
-  // adding texts on the stage
-  stageLevel.addChild(ammoLeftText);
-  stageLevel.addChild(reloadText);
+  console.log('ready to animate');
 
-  ScaleToWindow(renderer.view);
   animate();
 }
 
@@ -652,10 +731,10 @@ function AnimatePlayer(mouseX) {
 }
 
 function animate() {
-  playerBulletPool.updateBulletsSpeed();
-  enemyManager.Execute();
+  if (gameState === GAME_STATES.botLevel && player.isAlive) {
+    playerBulletPool.updateBulletsSpeed();
+    enemyManager.Execute();
 
-  if (player.isAlive) {
     MoveCreature(player);
 
     if (player.shooting) {
@@ -669,15 +748,21 @@ function animate() {
       }
       ++player.shootingTimeout;
     }
-    AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
-  } else {
-    reloadText.visible = false;
-    ammoLeftText.visible = false;
-  }
 
-  // render the container
-  if (player.isAlive) {
+    AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
+
+    // render the container
     renderer.render(stageLevel);
+  } else if (gameState === GAME_STATES.botLevel && !player.isAlive) {
+    gameState = GAME_STATES.deathScreen;
+
+    renderer.render(deathScreen);
+  } else if (gameState === GAME_STATES.deathScreen) {
+    console.log('rendering death screen');
+
+    renderer.render(deathScreen);
+  } else if (gameState === GAME_STATES.mainMenu) {
+    renderer.render(mainMenuScreen);
   }
 
   requestAnimationFrame(animate);
