@@ -26,7 +26,7 @@ const GAME_STATES = {
 
 let gameState = GAME_STATES.mainMenu;
 
-const stageLevel = new PIXI.Container();
+const botLevel = new PIXI.Container();
 const loadingScreen = new PIXI.Container();
 const deathScreen = new PIXI.Container();
 const mainMenuScreen = new PIXI.Container();
@@ -153,7 +153,7 @@ class BulletPool {
       bullet.scale.y = 1.5;
       bullet.direction = new PIXI.Point(0, 0);
       this.bulletPool.push(bullet);
-      stageLevel.addChild(bullet);
+      botLevel.addChild(bullet);
     }
   }
 
@@ -208,8 +208,8 @@ class BulletPool {
           explosion.loop = false;
           explosion.animationSpeed = 0.5;
           explosion.play();
-          explosion.onComplete = () => stageLevel.removeChild(explosion);
-          stageLevel.addChild(explosion);
+          explosion.onComplete = () => botLevel.removeChild(explosion);
+          botLevel.addChild(explosion);
 
           this.bulletPool[b].active = false;
         }
@@ -228,9 +228,9 @@ class BulletPool {
           explosion.loop = false;
           explosion.animationSpeed = 0.5;
           explosion.play();
-          explosion.onComplete = () => stageLevel.removeChild(explosion);
+          explosion.onComplete = () => botLevel.removeChild(explosion);
 
-          stageLevel.addChild(explosion);
+          botLevel.addChild(explosion);
         }
         if (this.bulletPool[b].active) {
           this.bulletPool[b].x +=
@@ -312,55 +312,101 @@ class BulletPool {
 
 class EnemyManager {
   constructor(
-    enemyAmount,
+    enemyBulletAmount,
+    enemyBulletSpeed,
+    enemyBulletDamage,
+    enemyReloadSpeed,
+    enemyLeftRunTexture,
+    enemyRightRunTexture,
+    enemyLeftBackRunTexture,
+    enemyRightBackRunTexture,
+    enemyLeftStaleTexture,
+    enemyRightStaleTexture
+  ) {
+    this.enemyLeftRunTexture = enemyLeftRunTexture;
+    this.enemyRightRunTexture = enemyRightRunTexture;
+    this.enemyLeftBackRunTexture = enemyLeftBackRunTexture;
+    this.enemyRightBackRunTexture = enemyRightBackRunTexture;
+    this.enemyLeftStaleTexture = enemyLeftStaleTexture;
+    this.enemyRightStaleTexture = enemyRightStaleTexture;
+    this.enemyBulletAmount = enemyBulletAmount;
+    this.enemyBulletSpeed = enemyBulletSpeed;
+    this.enemyBulletDamage = enemyBulletDamage;
+    this.enemyReloadSpeed = enemyReloadSpeed;
+
+    this.wave = 1;
+    this.enemyAmount = 1;
+    this.enemyHealth = player.health;
+
+    this.SpawnWave(
+      this.wave
+    );
+  }
+
+  SpawnWave() {
+    this.enemies = [];
+
+    this.enemyAmount *= Math.floor(this.wave > 3 ?
+      (this.wave > 10 ?
+        1.2 :
+        1.5) :
+      2);
+    this.enemyHealth += this.wave * 1.2;
+    console.log('enemyHealth: ' + this.enemyHealth);
+    for (let i = 0; i < this.enemyAmount; i++) this.SpawnEnemy(
+      this.enemyHealth,
+      this.enemyBulletAmount,
+      this.enemyBulletSpeed,
+      this.enemyBulletDamage,
+      this.enemyReloadSpeed
+    );
+    this.enemiesLeft = this.enemyAmount;
+  }
+
+  SpawnEnemy(
     enemyHealth,
     enemyBulletAmount,
     enemyBulletSpeed,
     enemyBulletDamage,
     enemyReloadSpeed
   ) {
-    this.enemies = [];
+    const enemyTemp = new PIXI.extras.AnimatedSprite(
+      this.enemyLeftStaleTexture
+    );
+    enemyTemp.position.x = player.x + 100 + Math.random() *
+      (renderer.width - (player.x + 100 - dungeon.x) - 120);
+    enemyTemp.position.y = dungeon.y + 90 + Math.random() *
+      (renderer.height - 270);
+    console.log('h: ' + renderer.height + '; w: ' + renderer.width +
+      '; eX: ' + enemyTemp.x + '; eY: ' + enemyTemp.y);
+    enemyTemp.scale.x = 1.5;
+    enemyTemp.scale.y = 1.5;
+    enemyTemp.visible = true;
+    botLevel.addChild(enemyTemp);
 
-    for (let i = 0; i < enemyAmount; i++) {
-      const enemyTemp = new PIXI.extras.AnimatedSprite(enemyStaleLeft);
-      enemyTemp.position.x = player.x + 100 + Math.random() *
-        (renderer.width - (player.x + 100 - dungeon.x) - 120);
-      enemyTemp.position.y = dungeon.y + 90 + Math.random() *
-        (renderer.height - 270);
-      console.log('h: ' + renderer.height + '; w: ' + renderer.width +
-        '; eX: ' + enemyTemp.x + '; eY: ' + enemyTemp.y);
-      enemyTemp.scale.x = 1.5;
-      enemyTemp.scale.y = 1.5;
-      enemyTemp.visible = true;
-      stageLevel.addChild(enemyTemp);
+    const enemyBulletPool = new BulletPool(
+      enemyBulletTexture,
+      explosionRedTextures,
+      enemyBulletAmount,
+      enemyBulletSpeed,
+      enemyBulletDamage,
+      enemyReloadSpeed,
+      enemyTemp);
 
-      const enemyBulletPool = new BulletPool(
-        enemyBulletTexture,
-        explosionRedTextures,
-        enemyBulletAmount,
-        enemyBulletSpeed,
-        enemyBulletDamage,
-        enemyReloadSpeed,
-        enemyTemp);
+    const enemyStruct = {
+      active: true,
+      enemy: enemyTemp,
+      enemyHealth,
+      enemyBulletPool,
+      shootingTimeout: 0
+    };
 
-      const enemyStruct = {
-        active: true,
-        enemy: enemyTemp,
-        enemyHealth,
-        enemyBulletPool,
-        shootingTimeout: 0
-      };
-
-      this.enemies.push(enemyStruct);
-
-      this.enemiesLeft = enemyAmount;
-      this.enemiesAmount = enemyAmount;
-    }
+    this.enemies.push(enemyStruct);
   }
 
   Execute() {
     if (this.enemiesLeft > 0) {
-      for (let i = 0; i < this.enemiesAmount; i++) {
+      for (let i = 0; i < this.enemyAmount; i++) {
         if (this.enemies[i].active) {
           // check the player's bullets collision with this enemy
           for (let j = 0; j < playerBulletPool.getBulletsAmount(); j++) {
@@ -378,7 +424,7 @@ class EnemyManager {
               if (this.enemies[i].enemyHealth <= 0) {
                 this.enemies[i].active = false;
                 this.enemies[i].enemy.visible = false;
-                stageLevel.removeChild(this.enemies[i].enemy);
+                botLevel.removeChild(this.enemies[i].enemy);
                 this.enemiesLeft--;
               }
             }
@@ -396,19 +442,30 @@ class EnemyManager {
         }
 
       }
+    } else {
+      // WaveCleared();
+      this.Clear();
+      this.wave += 1;
+      this.SpawnWave();
     }
-    for (let i = 0; i < this.enemiesAmount; i++) {
-      for (let j = 0;
+
+    // updating the enemies bullets
+    for (let i = 0; i < this.enemyAmount; i++) {
+      for (
+        let j = 0;
         j < this.enemies[i].enemyBulletPool.getBulletsAmount();
-        j++) {
-        if (this.enemies[i].enemyBulletPool.getBullet(j).active &&
+        j++
+      ) {
+        if (
+          this.enemies[i].enemyBulletPool.getBullet(j).active &&
           !this.enemies[i].enemyBulletPool.getBullet(j).destroyed &&
           player.isAlive &&
           checkCollision(
             this.enemies[i].enemyBulletPool.getBullet(j),
             player,
             player.width / 4,
-            player.height / 2)) {
+            player.height / 2)
+        ) {
           this.enemies[i].enemyBulletPool.setBulletDestroyed(j);
           player.health -=
             this.enemies[i].enemyBulletPool.getDamage();
@@ -422,6 +479,38 @@ class EnemyManager {
 
       // updating this enemies bullets even if the enemy is dead
       this.enemies[i].enemyBulletPool.updateBulletsSpeed();
+    }
+  }
+
+  Clear() {
+    for (let i = 0; i < this.enemyAmount; i++) {
+      for (let j = 0;
+        j < this.enemies[i].enemyBulletPool.getBulletsAmount();
+        j++) {
+        if (this.enemies[i].enemyBulletPool.getBullet(j).visible) {
+          this.enemies[i].enemyBulletPool.getBullet(j).destroyed = false;
+          this.enemies[i].enemyBulletPool.getBullet(j).visible = false;
+          this.enemies[i].enemyBulletPool.getBullet(j).active = false;
+
+          const explosion =
+            new PIXI.extras.AnimatedSprite(
+              this.enemies[i].enemyBulletPool.explosionTexture
+            );
+          explosion.x = this.enemies[i].enemyBulletPool.getBullet(j).x;
+          explosion.y = this.enemies[i].enemyBulletPool.getBullet(j).y;
+          explosion.anchor.set(0.5);
+          explosion.rotation = Math.random() * Math.PI;
+          explosion.scale.set(0.2 + Math.random() * 0.2);
+          explosion.loop = false;
+          explosion.animationSpeed = 0.5;
+          explosion.play();
+          explosion.onComplete = () => botLevel.removeChild(explosion);
+
+          botLevel.addChild(explosion);
+        }
+
+        botLevel.removeChild(this.enemies[i].enemyBulletPool.getBullet(j));
+      }
     }
   }
 }
@@ -502,7 +591,7 @@ function setup() {
   }
   dungeon.scale.x = previousMultiplier;
   dungeon.scale.y = previousMultiplier;
-  stageLevel.addChild(dungeon);
+  botLevel.addChild(dungeon);
   console.log('made dungeon');
 
   // ammo text setup
@@ -590,7 +679,7 @@ function setup() {
   player.health = 100;
   player.isAlive = true;
   player.state = playerState.idleRight;
-  stageLevel.addChild(player);
+  botLevel.addChild(player);
 
   playerBulletPool = new BulletPool(
     playerBulletTexture,
@@ -604,31 +693,35 @@ function setup() {
 
   enemyManager = new EnemyManager(
     5,
-    100,
-    5,
     6,
     20,
-    80);
+    80,
+    enemyRunLeft,
+    enemyRunRight,
+    enemyRunLeftBack,
+    enemyRunRightBack,
+    enemyStaleLeft,
+    enemyStaleRight);
 
   // creating a custom cursor-crosshair
   const interaction = renderer.plugins.interaction;
   interaction.cursorStyles['crosshair'] =
     'url(\'./assets/utils/crosshair.cur\'),auto';
-  stageLevel.interactive = true;
-  stageLevel.cursor = 'crosshair';
+  botLevel.interactive = true;
+  botLevel.cursor = 'crosshair';
 
-  stageLevel.on('pointerdown', () => {
+  botLevel.on('pointerdown', () => {
     player.shooting = true;
   });
-  stageLevel.on('pointerup', () => {
+  botLevel.on('pointerup', () => {
     player.shooting = false;
     player.shootingTimeout = gunTimeout;
   });
 
 
   // adding texts on the stage
-  stageLevel.addChild(ammoLeftText);
-  stageLevel.addChild(reloadText);
+  botLevel.addChild(ammoLeftText);
+  botLevel.addChild(reloadText);
 
   ScaleToWindow(renderer.view);
 
@@ -752,7 +845,7 @@ function animate() {
     AnimatePlayer(renderer.plugins.interaction.mouse.global.x);
 
     // render the container
-    renderer.render(stageLevel);
+    renderer.render(botLevel);
   } else if (gameState === GAME_STATES.botLevel && !player.isAlive) {
     gameState = GAME_STATES.deathScreen;
 
@@ -769,7 +862,7 @@ function animate() {
 }
 
 module.exports = {
-  stageLevel,
+  stageLevel: botLevel,
   player,
   playerBulletPool,
   dungeon,

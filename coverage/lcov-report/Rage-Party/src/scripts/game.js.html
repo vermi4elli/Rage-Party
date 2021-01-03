@@ -767,7 +767,7 @@ const renderer =
 });
 &nbsp;
 // create the root of the scene graph
-const stageLevel = <span class="cstat-no" title="statement not covered" >new PIXI.Container();</span>
+const botLevel = <span class="cstat-no" title="statement not covered" >new PIXI.Container();</span>
 // const stageMenu = new PIXI.Container();
 &nbsp;
 const bulletTexture = <span class="cstat-no" title="statement not covered" >PIXI.Texture.from('assets/bullet.png');</span>
@@ -830,7 +830,7 @@ const dungeon = <span class="cstat-no" title="statement not covered" >new PIXI.S
 <span class="cstat-no" title="statement not covered" >dungeon.position.x = 0;</span>
 <span class="cstat-no" title="statement not covered" >dungeon.position.y = 0;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >stageLevel.addChild(dungeon);</span>
+<span class="cstat-no" title="statement not covered" >botLevel.addChild(dungeon);</span>
 &nbsp;
 // create a new Sprite using the bulletTexture
 const player = <span class="cstat-no" title="statement not covered" >new PIXI.extras.AnimatedSprite(playerStaleLeft);</span>
@@ -847,12 +847,12 @@ const gunTimeout = <span class="cstat-no" title="statement not covered" >10;</sp
 <span class="cstat-no" title="statement not covered" >player.shooting = false;</span>
 <span class="cstat-no" title="statement not covered" >player.shootingTimeout = gunTimeout;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >stageLevel.addChild(player);</span>
-<span class="cstat-no" title="statement not covered" >stageLevel.interactive = true;</span>
-<span class="cstat-no" title="statement not covered" >stageLevel.on('mousedown', <span class="fstat-no" title="function not covered" >_ </span>=&gt; {</span>
+<span class="cstat-no" title="statement not covered" >botLevel.addChild(player);</span>
+<span class="cstat-no" title="statement not covered" >botLevel.interactive = true;</span>
+<span class="cstat-no" title="statement not covered" >botLevel.on('mousedown', <span class="fstat-no" title="function not covered" >_ </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  player.shooting = true;</span>
 });
-<span class="cstat-no" title="statement not covered" >stageLevel.on('mouseup', <span class="fstat-no" title="function not covered" >_ </span>=&gt; {</span>
+<span class="cstat-no" title="statement not covered" >botLevel.on('mouseup', <span class="fstat-no" title="function not covered" >_ </span>=&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  player.shooting = false;</span>
 <span class="cstat-no" title="statement not covered" >  player.shootingTimeout = gunTimeout;</span>
 });
@@ -882,7 +882,7 @@ class BulletPool {
 <span class="cstat-no" title="statement not covered" >      bullet.scale.y = 1.5;</span>
 <span class="cstat-no" title="statement not covered" >      bullet.direction = new PIXI.Point(0, 0);</span>
 <span class="cstat-no" title="statement not covered" >      this.bulletPool.push(bullet);</span>
-<span class="cstat-no" title="statement not covered" >      stageLevel.addChild(bullet);</span>
+<span class="cstat-no" title="statement not covered" >      botLevel.addChild(bullet);</span>
     }
   }
 &nbsp;
@@ -926,8 +926,8 @@ class BulletPool {
 <span class="cstat-no" title="statement not covered" >          explosion.loop = false;</span>
 <span class="cstat-no" title="statement not covered" >          explosion.animationSpeed = 0.5;</span>
 <span class="cstat-no" title="statement not covered" >          explosion.play();</span>
-<span class="cstat-no" title="statement not covered" >          explosion.onComplete = <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >stageLevel.removeChild(explosion);</span></span>
-<span class="cstat-no" title="statement not covered" >          stageLevel.addChild(explosion);</span>
+<span class="cstat-no" title="statement not covered" >          explosion.onComplete = <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >botLevel.removeChild(explosion);</span></span>
+<span class="cstat-no" title="statement not covered" >          botLevel.addChild(explosion);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >          this.bulletPool[b].active = false;</span>
         }
@@ -1055,8 +1055,8 @@ function <span class="fstat-no" title="function not covered" >AnimatePlayer(</sp
   // return player;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >stageLevel.addChild(ammoLeftText);</span>
-<span class="cstat-no" title="statement not covered" >stageLevel.addChild(reloadText);</span>
+<span class="cstat-no" title="statement not covered" >botLevel.addChild(ammoLeftText);</span>
+<span class="cstat-no" title="statement not covered" >botLevel.addChild(reloadText);</span>
 &nbsp;
 // start animating
 //ScaleToWindow(renderer.view);
@@ -1078,12 +1078,12 @@ function <span class="fstat-no" title="function not covered" >animate(</span>) {
 <span class="cstat-no" title="statement not covered" >  AnimatePlayer(renderer.plugins.interaction.mouse.global.x);</span>
 &nbsp;
   // render the container
-<span class="cstat-no" title="statement not covered" >  renderer.render(stageLevel);</span>
+<span class="cstat-no" title="statement not covered" >  renderer.render(botLevel);</span>
 <span class="cstat-no" title="statement not covered" >  requestAnimationFrame(animate);</span>
 }
 &nbsp;
 // module.exports = {
-//   stageLevel,
+//   botLevel,
 //   player,
 //   playerBulletPool,
 //   dungeon,
