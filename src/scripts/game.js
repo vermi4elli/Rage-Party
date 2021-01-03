@@ -140,7 +140,9 @@ class BulletPool {
     this.speed = bulletSpeed;
     this.damage = bulletDamage;
 
-    ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+    if (this.sourceSprite === player) {
+      ammoLeftText.text = this.bulletsLeft + ' / ' + this.amount;
+    }
 
     this.reloadSpeed = reloadSpeed;
     this.isReloading = false;
@@ -575,8 +577,7 @@ function setup() {
   restartButton.on('pointerdown', () => {
     gameState = GAME_STATES.botLevel;
 
-    player.isAlive = true;
-    player.health = 100;
+    ResetLevel();
   });
 
   exitButton = new PIXI.Sprite(
@@ -588,6 +589,8 @@ function setup() {
   exitButton.visible = true;
   exitButton.on('pointerdown', () => {
     gameState = GAME_STATES.mainMenu;
+
+    ResetLevel();
   });
 
   startButton = new PIXI.Sprite(
@@ -793,6 +796,52 @@ const playerRunningLeft = new PIXI.extras.AnimatedSprite(playerRunLeft),
 playerRunningLeft.loop = true;
 playerRunningRight.loop = true;
 
+function ResetLevel() {
+  botLevel.removeChildren();
+
+  botLevel.addChild(dungeon);
+  ammoLeftText.text = '12 / 12';
+  reloadText.visible = false;
+  botLevel.addChild(ammoLeftText);
+  botLevel.addChild(reloadText);
+
+  player = new PIXI.extras.AnimatedSprite(playerStaleRight);
+  player.position.x = renderer.width / 4;
+  player.position.y = renderer.height / 2;
+  player.vx = 0;
+  player.vy = 0;
+  player.scale.x = 1.5;
+  player.scale.y = 1.5;
+  player.shooting = false;
+  player.shootingTimeout = gunTimeout;
+  player.health = 100;
+  player.isAlive = true;
+  player.state = playerState.idleRight;
+  botLevel.addChild(player);
+
+  playerBulletPool = new BulletPool(
+    playerBulletTexture,
+    explosionOrangeTextures,
+    bulletAmount,
+    bulletSpeed,
+    bulletDamage,
+    reloadSpeed,
+    player
+  );
+
+  enemyManager = new EnemyManager(
+    5,
+    6,
+    20,
+    80,
+    enemyRunLeft,
+    enemyRunRight,
+    enemyRunLeftBack,
+    enemyRunRightBack,
+    enemyStaleLeft,
+    enemyStaleRight);
+}
+
 function WaveCleared(wave, step) {
   const waveTextStyle = new PIXI.TextStyle({
     fill: 'white',
@@ -815,7 +864,6 @@ function WaveCleared(wave, step) {
     waveText.visible = true;
 
     botLevel.addChild(waveText);
-
     break;
   }
   case 2: {
@@ -960,11 +1008,8 @@ function animate() {
     renderer.render(botLevel);
   } else if (gameState === GAME_STATES.botLevel && !player.isAlive) {
     gameState = GAME_STATES.deathScreen;
-
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.deathScreen) {
-    console.log('rendering death screen');
-
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.mainMenu) {
     renderer.render(mainMenuScreen);
