@@ -6,7 +6,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "start": "npm run clean && tsc && webpack --config webpack.common.js && node index.js",
-    "build": "tsc && webpack --config webpack.prod.js",
+    "tsc": "tsc",
+    "build": "npm run tsc && webpack --config webpack.prod.js",
     "prod": "node index.js",
     "test": "jest",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
