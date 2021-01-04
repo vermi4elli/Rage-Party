@@ -345,7 +345,8 @@ class EnemyManager {
     this.FreezerVelocityChange = 150;
 
     this.wave = 1;
-    this.enemyAmount = 1;
+    this.enemyAmountKoef = 1;
+    this.enemyAmount = this.enemyAmountKoef;
     this.enemyHealth = player.health;
 
     this.SpawnWave(
@@ -359,11 +360,12 @@ class EnemyManager {
     player.position.x = renderer.width / 4;
     player.position.y = renderer.height / 2;
 
-    this.enemyAmount *= Math.floor(this.wave > 3 ?
+    this.enemyAmountKoef *= this.wave > 3 ?
       (this.wave > 10 ?
         1.1 :
         1.25) :
-      1.4);
+      1.4;
+    this.enemyAmount = Math.floor(this.enemyAmountKoef);
     this.enemyHealth += this.wave * 1.2;
     for (let i = 0; i < this.enemyAmount; i++) this.SpawnEnemy(
       this.enemyHealth,
