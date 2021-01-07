@@ -1085,18 +1085,12 @@ function MoveCreature(creature) {
     ((creatureCollisions.x === collisionType.left) && (creature.vx >= 0)) ||
     ((creatureCollisions.x === collisionType.right) && (creature.vx <= 0))
   ) {
-    if (creature !== player) {
-      console.log('moving enemy x');
-    }
     creature.position.x += creature.vx;
   }
   if (creatureCollisions.y === collisionType.no ||
     ((creatureCollisions.y === collisionType.top) && (creature.vy <= 0)) ||
     ((creatureCollisions.y === collisionType.down) && (creature.vy >= 0))
   ) {
-    if (creature !== player) {
-      console.log('moving enemy y');
-    }
     creature.position.y -= creature.vy;
   }
 }
