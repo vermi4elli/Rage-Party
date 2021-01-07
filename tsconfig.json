@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["node_modules/@types"],
+    "outDir": "built",
+    "module": "CommonJS",
+    "target": "ESNext",
+    "allowJs": true,
+    "moduleResolution": "node",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "strict": true,
+    "preserveConstEnums": true,
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true
+  },
+  "include": [
+    "db"
+  ],
+  "exclude":[
+    "node_modules"
+  ]
+}

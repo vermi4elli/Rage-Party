@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rimraf dist",
-    "start": "npm run clean && webpack --config webpack.common.js && node index.js",
+    "start": "npm run clean && tsc && webpack --config webpack.common.js && node index.js",
     "build": "webpack --config webpack.prod.js",
     "prod": "node index.js",
     "test": "jest",
@@ -34,7 +34,10 @@
       "./src/scripts/*.js",
       "./index.js"
     ],
-    "coverageDirectory": "./coverage/"
+    "coverageDirectory": "./coverage/",
+    "setupFiles": [
+      "jest-canvas-mock"
+    ]
   },
   "devDependencies": {
     "@babel/core": "^7.12.3",
@@ -47,6 +50,7 @@
     "html-webpack-plugin": "^4.5.0",
     "imagemin-webpack-plugin": "^2.4.2",
     "jest": "^26.6.1",
+    "jest-canvas-mock": "^2.3.0",
     "rimraf": "^3.0.2",
     "webpack": "^5.3.0",
     "webpack-cli": "^3.3.12",
@@ -56,8 +60,15 @@
   "dependencies": {
     "@babel/runtime": "^7.12.1",
     "core-js": "^3.6.5",
+    "dotenv": "^8.2.0",
     "fastify": "^3.5.1",
+    "fastify-cors": "^5.1.0",
     "fastify-static": "^3.2.1",
-    "pixi.js": "^5.3.3"
+    "mongodb": "^3.6.3",
+    "pg": "^8.5.1",
+    "pixi-sound": "^2.0.0-alpha.6",
+    "pixi.js": "^4.8.9",
+    "source-map-loader": "^2.0.0",
+    "ts-loader": "^8.0.12"
   }
 }
