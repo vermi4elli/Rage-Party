@@ -1,4 +1,4 @@
-export const keyboard = value => {
+export function keyboard(value) {
   const key = {};
   key.value = value;
   key.isDown = false;
@@ -36,11 +36,11 @@ export const keyboard = value => {
     'keyup', upListener, false
   );
 
-  // Detach event listeners
-  key.unsubscribe = () => {
-    window.removeEventListener('keydown', downListener);
-    window.removeEventListener('keyup', upListener);
-  };
-
   return key;
-};
+}
+
+export const left = keyboard('KeyA'),
+  up = keyboard('KeyW'),
+  right = keyboard('KeyD'),
+  down = keyboard('KeyS'),
+  reloadButton = keyboard('KeyR');
