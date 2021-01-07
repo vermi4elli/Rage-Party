@@ -8,7 +8,7 @@ const getScoreByName = (name) => {
     };
 };
 exports.getScoreByName = getScoreByName;
-const getScores = () => 'select name, score from scores;';
+const getScores = () => 'select name, score from scores order by score desc;';
 exports.getScores = getScores;
 const uploadScore = (name, score) => {
     return {

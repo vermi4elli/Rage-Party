@@ -6,7 +6,7 @@ export const getScoreByName = (name: string) => {
         values: [name]
     };
 };
-export const getScores = () => 'select name, score from scores;';
+export const getScores = () => 'select name, score from scores order by score desc;';
 export const uploadScore = (name: string, score: number) => {
     return {
         text: 'insert into scores (name, score) VALUES ($1, $2)',

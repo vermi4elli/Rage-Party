@@ -18,18 +18,20 @@ window.addEventListener('resize', () => {
 });
 
 const GAME_STATES = {
-  mainMenu: 0,
-  botLevel: 1,
-  deathScreen: 2,
-  scoreScreen: 3
+  waiting: 0,
+  mainMenu: 1,
+  botLevel: 2,
+  deathScreen: 3,
+  scoreScreen: 4
 };
 
-let gameState = GAME_STATES.mainMenu;
+let gameState = GAME_STATES.waiting;
 
 const botLevel = new PIXI.Container();
 const loadingScreen = new PIXI.Container();
 const deathScreen = new PIXI.Container();
 const mainMenuScreen = new PIXI.Container();
+const waitingScreen = new PIXI.Container();
 
 const loadingStyle = new PIXI.TextStyle({
   fill: 'white',
@@ -38,8 +40,7 @@ const loadingStyle = new PIXI.TextStyle({
   stroke: 'white'
 });
 const loadingText = new PIXI.Text('LOADING...', loadingStyle);
-loadingText.x = renderer.width / 4 * 1.5;
-loadingText.y = renderer.height / 4 * 1.5;
+loadingText.position.set(renderer.width / 4 * 1.5, renderer.height / 4 * 1.5);
 loadingText.visible = true;
 loadingScreen.interactive = false;
 loadingScreen.addChild(loadingText);
@@ -66,14 +67,20 @@ textures.push('./assets/score_button.png');
 const loader = new PIXI.loaders.Loader();
 loader.add(textures);
 loader.add('playerShot', './assets/laser_player.mp3');
+loader.add('mainMenu', './assets/mainMenuMusic.mp3');
+loader.add('battleMusic', './assets/battleMusic.mp3');
 loader.onComplete.add(setup);
 loader.load();
 
 let player,
+  healthBar,
   dungeon,
   ammoLeftText,
   reloadText,
   waveText,
+  deathText,
+  titleText,
+  waitingText,
   waveCountdown,
   playerBulletPool,
   enemyManager,
@@ -106,6 +113,8 @@ const gunTimeout = 10,
   bulletDamage = 20,
   linearSpeed = 4,
   linearEnemySpeed = 2,
+  rotPos = 0.005,
+  rotNeg = -0.005,
   animationState = {
     idleRight: 0,
     idleLeft: 1,
@@ -119,6 +128,8 @@ const gunTimeout = 10,
   right = keyboard('KeyD'),
   down = keyboard('KeyS'),
   reloadButton = keyboard('KeyR');
+
+let rotation = rotPos;
 
 class BulletPool {
   constructor(
@@ -151,8 +162,7 @@ class BulletPool {
 
     for (let i = 0; i < bulletAmount * 2; i++) {
       const bullet = new PIXI.Sprite(this.bulletTexture);
-      bullet.position.x = 0;
-      bullet.position.y = 0;
+      bullet.position.set(0, 0);
       bullet.visible = false;
       bullet.scale.x = 1.5;
       bullet.scale.y = 1.5;
@@ -205,8 +215,7 @@ class BulletPool {
           const explosion =
             new PIXI.extras.AnimatedSprite(this.explosionTexture);
 
-          explosion.x = this.bulletPool[b].x;
-          explosion.y = this.bulletPool[b].y;
+          explosion.position.set(this.bulletPool[b].x, this.bulletPool[b].y);
           explosion.anchor.set(0.5);
           explosion.rotation = Math.random() * Math.PI;
           explosion.scale.set(0.2 + Math.random() * 0.2);
@@ -225,8 +234,7 @@ class BulletPool {
 
           const explosion =
             new PIXI.extras.AnimatedSprite(this.explosionTexture);
-          explosion.x = this.bulletPool[b].x;
-          explosion.y = this.bulletPool[b].y;
+          explosion.position.set(this.bulletPool[b].x, this.bulletPool[b].y);
           explosion.anchor.set(0.5);
           explosion.rotation = Math.random() * Math.PI;
           explosion.scale.set(0.2 + Math.random() * 0.2);
@@ -278,8 +286,10 @@ class BulletPool {
       bullet.direction.x /= length;
       bullet.direction.y /= length;
 
-      bullet.position.x = this.sourceSprite.x + this.sourceSprite.width / 5;
-      bullet.position.y = this.sourceSprite.y + this.sourceSprite.height / 3;
+      bullet.position.set(
+        this.sourceSprite.x + this.sourceSprite.width / 5,
+        this.sourceSprite.y + this.sourceSprite.height / 3
+      );
 
       bullet.active = true;
 
@@ -344,21 +354,28 @@ class EnemyManager {
     this.Freezer3 = 150;
     this.FreezerVelocityChange = 150;
 
-    this.wave = 1;
+    this.wave = 0;
     this.enemyAmountKoef = 1;
     this.enemyAmount = this.enemyAmountKoef;
-    this.enemyHealth = player.health;
+    this.enemyHealth = player.initialHealth;
+    this.enemiesLeft = 0;
 
-    this.SpawnWave(
-      this.wave
-    );
+    this.waveFreezer1Countdown = this.Freezer1;
+    this.waveFreezer2Countdown = this.Freezer2;
+    this.waveFreezer3Countdown = this.Freezer3;
+
+    this.waveFreezer1Done = false;
+    this.waveFreezer2Done = false;
+
+    this.firstWave = true;
   }
 
   SpawnWave() {
+    this.firstWave = false;
+
     this.enemies = [];
 
-    player.position.x = renderer.width / 4;
-    player.position.y = renderer.height / 2;
+    player.position.set(renderer.width / 4, renderer.height / 2);
 
     this.enemyAmountKoef *= this.wave > 3 ?
       (this.wave > 10 ?
@@ -394,10 +411,12 @@ class EnemyManager {
     const enemyTemp = new PIXI.extras.AnimatedSprite(
       this.enemyLeftStaleTexture
     );
-    enemyTemp.position.x = player.x + 300 + Math.random() *
-      (renderer.width - (player.x + 300 - dungeon.x) - 120);
-    enemyTemp.position.y = dungeon.y + 90 + Math.random() *
-      (renderer.height - 270);
+    enemyTemp.position.set(
+      player.x + 300 + Math.random() *
+      (renderer.width - (player.x + 300 - dungeon.x) - 120), // available width
+      dungeon.y + 90 + Math.random() *
+      (renderer.height - 270) // available height
+    );
     enemyTemp.scale.x = 1.5;
     enemyTemp.scale.y = 1.5;
     enemyTemp.visible = true;
@@ -478,8 +497,8 @@ class EnemyManager {
       }
     } else {
       if (!this.waveFreezer1Done) {
-        WaveCleared(this.wave, 1);
-        this.Clear();
+        WaveCleared(this.wave, 1, this.firstWave);
+        if (this.wave) this.Clear();
         this.waveFreezer1Done = true;
       }
       if (this.waveFreezer1Countdown === 0) {
@@ -516,35 +535,39 @@ class EnemyManager {
     }
 
     // updating the enemies bullets
-    for (let i = 0; i < this.enemyAmount; i++) {
-      for (
-        let j = 0;
-        j < this.enemies[i].enemyBulletPool.getBulletsAmount();
-        j++
-      ) {
-        if (
-          this.enemies[i].enemyBulletPool.getBullet(j).active &&
-          !this.enemies[i].enemyBulletPool.getBullet(j).destroyed &&
-          player.isAlive &&
-          checkCollision(
-            this.enemies[i].enemyBulletPool.getBullet(j),
-            player,
-            player.width / 4,
-            player.height / 2)
+    if (!this.firstWave) {
+      for (let i = 0; i < this.enemyAmount; i++) {
+        for (
+          let j = 0;
+          j < this.enemies[i].enemyBulletPool.getBulletsAmount();
+          j++
         ) {
-          this.enemies[i].enemyBulletPool.setBulletDestroyed(j);
-          player.health -=
-            this.enemies[i].enemyBulletPool.getDamage();
+          if (
+            this.enemies[i].enemyBulletPool.getBullet(j).active &&
+            !this.enemies[i].enemyBulletPool.getBullet(j).destroyed &&
+            player.isAlive &&
+            checkCollision(
+              this.enemies[i].enemyBulletPool.getBullet(j),
+              player,
+              player.width / 4,
+              player.height / 2)
+          ) {
+            this.enemies[i].enemyBulletPool.setBulletDestroyed(j);
+            player.health -=
+              this.enemies[i].enemyBulletPool.getDamage();
 
-          // check if the player is killed after the shot
-          if (player.health <= 0) {
-            player.isAlive = false;
+            // check if the player is killed after the shot
+            if (player.health <= 0) {
+              player.isAlive = false;
+            } else {
+              healthBar.updateHealth(player.health, player.initialHealth);
+            }
           }
         }
-      }
 
-      // updating this enemies bullets even if the enemy is dead
-      this.enemies[i].enemyBulletPool.updateBulletsSpeed();
+        // updating this enemies bullets even if the enemy is dead
+        this.enemies[i].enemyBulletPool.updateBulletsSpeed();
+      }
     }
   }
 
@@ -618,8 +641,10 @@ class EnemyManager {
             new PIXI.extras.AnimatedSprite(
               this.enemies[i].enemyBulletPool.explosionTexture
             );
-          explosion.x = this.enemies[i].enemyBulletPool.getBullet(j).x;
-          explosion.y = this.enemies[i].enemyBulletPool.getBullet(j).y;
+          explosion.position.set(
+            this.enemies[i].enemyBulletPool.getBullet(j).x,
+            this.enemies[i].enemyBulletPool.getBullet(j).y
+          );
           explosion.anchor.set(0.5);
           explosion.rotation = Math.random() * Math.PI;
           explosion.scale.set(0.2 + Math.random() * 0.2);
@@ -638,14 +663,22 @@ class EnemyManager {
 }
 
 function setup() {
-  const buttonX = renderer.width / 4 * 1.4,
-    buttonY = renderer.height / 4,
-    offsetY = renderer.height / 3;
+  const buttonX = renderer.width / 2,
+    textY = renderer.height / 6,
+    offsetY = renderer.height / 4,
+    buttonY = renderer.height / 2;
+
+  const deathStyle = new PIXI.TextStyle({
+    fill: 'red',
+    fontFamily: 'Impact',
+    fontSize: 100,
+    stroke: 'white'
+  });
 
   restartButton = new PIXI.Sprite(
     PIXI.utils.TextureCache['./assets/restart_button.png']);
-  restartButton.x = buttonX;
-  restartButton.y = buttonY;
+  restartButton.anchor.set(0.5);
+  restartButton.position.set(buttonX, buttonY);
   restartButton.buttonMode = true;
   restartButton.interactive = true;
   restartButton.visible = true;
@@ -657,32 +690,48 @@ function setup() {
 
   exitButton = new PIXI.Sprite(
     PIXI.utils.TextureCache['./assets/exit_button.png']);
-  exitButton.x = buttonX;
-  exitButton.y = buttonY + offsetY;
+  exitButton.anchor.set(0.5);
+  exitButton.position.set(buttonX, buttonY + offsetY);
   exitButton.buttonMode = true;
   exitButton.interactive = true;
   exitButton.visible = true;
   exitButton.on('pointerdown', () => {
     gameState = GAME_STATES.mainMenu;
 
+    sound.stop('battleMusic');
+
+    sound.play('mainMenu', {
+      loop: true,
+      speed: 1,
+      volume: 0.3
+    });
+
     ResetLevel();
   });
 
   startButton = new PIXI.Sprite(
     PIXI.utils.TextureCache['./assets/start_button.png']);
-  startButton.x = buttonX;
-  startButton.y = buttonY;
+  startButton.anchor.set(0.5);
+  startButton.position.set(buttonX, buttonY);
   startButton.buttonMode = true;
   startButton.interactive = true;
   startButton.visible = true;
   startButton.on('pointerdown', () => {
     gameState = GAME_STATES.botLevel;
+
+    sound.stop('mainMenu');
+
+    sound.play('battleMusic', {
+      loop: true,
+      speed: 1,
+      volume: 0.3
+    });
   });
 
   scoreButton = new PIXI.Sprite(
     PIXI.utils.TextureCache['./assets/score_button.png']);
-  scoreButton.x = buttonX;
-  scoreButton.y = buttonY + offsetY;
+  scoreButton.anchor.set(0.5);
+  scoreButton.position.set(buttonX, buttonY + offsetY);
   scoreButton.buttonMode = true;
   scoreButton.interactive = true;
   scoreButton.visible = true;
@@ -691,18 +740,39 @@ function setup() {
   });
 
   // adding the buttons to the death screen
+  deathText = new PIXI.Text('YOU DIED!', deathStyle);
+  deathText.anchor.set(0.5);
+  deathText.position.set(buttonX, textY);
+  deathText.visible = true;
   deathScreen.addChild(restartButton);
   deathScreen.addChild(exitButton);
+  deathScreen.addChild(deathText);
 
   // adding the buttons to the main menu screen
+  titleText = new PIXI.Text('Rage 🤬 Party', deathStyle);
+  titleText.anchor.set(0.5);
+  titleText.position.set(buttonX, textY);
+  titleText.visible = true;
   mainMenuScreen.addChild(startButton);
   mainMenuScreen.addChild(scoreButton);
+  mainMenuScreen.addChild(titleText);
+
+  waitingText = new PIXI.Text('Press here to continue...', deathStyle);
+  waitingText.anchor.set(0.5);
+  waitingText.position.set(renderer.width / 2, renderer.height / 2);
+  waitingText.visible = true;
+  waitingText.buttonMode = true;
+  waitingText.interactive = true;
+  waitingText.on('pointerdown', () => {
+    gameState = GAME_STATES.mainMenu;
+  });
+  waitingScreen.interactive = true;
+  waitingScreen.addChild(waitingText);
 
   // dungeon sprite setup
   dungeon = new PIXI.Sprite(
     PIXI.utils.TextureCache['./assets/levels/baseMap.png']);
-  dungeon.position.x = 0;
-  dungeon.position.y = 0;
+  dungeon.position.set(0, 0);
 
   let multiplier = 1.0, previousMultiplier = 1.0;
   while (dungeon.width * multiplier <= renderer.width) {
@@ -712,29 +782,6 @@ function setup() {
   dungeon.scale.x = previousMultiplier;
   dungeon.scale.y = previousMultiplier;
   botLevel.addChild(dungeon);
-
-  // ammo text setup
-  const ammoLeftStyle = new PIXI.TextStyle({
-    fill: 'white',
-    fontFamily: 'Impact',
-    fontSize: 40,
-    stroke: 'white'
-  });
-  ammoLeftText = new PIXI.Text('12 / 12', ammoLeftStyle);
-  ammoLeftText.x = renderer.width / 10 * 9;
-  ammoLeftText.y = renderer.height / 7 * 6;
-
-  // reload hint text setup
-  const reloadStyle = new PIXI.TextStyle({
-    fill: 'red',
-    fontFamily: 'Impact',
-    fontSize: 40,
-    stroke: 'white'
-  });
-  reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
-  reloadText.x = renderer.width / 10 * 5;
-  reloadText.y = renderer.height / 7 * 6;
-  reloadText.visible = false;
 
   playerBulletTexture = new PIXI.Texture(
     PIXI.utils.TextureCache['./assets/bullet.png']);
@@ -785,18 +832,31 @@ function setup() {
 
   // the player sprite
   player = new PIXI.extras.AnimatedSprite(playerStaleRight);
-  player.position.x = renderer.width / 4;
-  player.position.y = renderer.height / 2;
+  player.position.set(renderer.width / 4, renderer.height / 2);
   player.vx = 0;
   player.vy = 0;
   player.scale.x = 1.5;
   player.scale.y = 1.5;
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
-  player.health = 100;
+  player.initialHealth = 100;
+  player.health = player.initialHealth;
   player.isAlive = true;
   player.state = animationState.idleRight;
   botLevel.addChild(player);
+
+  // ammo text setup
+  const ammoLeftStyle = new PIXI.TextStyle({
+    fill: 'white',
+    fontFamily: 'Impact',
+    fontSize: 40,
+    stroke: 'white'
+  });
+  ammoLeftText = new PIXI.Text('', ammoLeftStyle);
+  ammoLeftText.position.set(
+    dungeon.x + dungeon.width / 10 * 8.6,
+    dungeon.y + dungeon.height / 7 * 6
+  );
 
   playerBulletPool = new BulletPool(
     playerBulletTexture,
@@ -807,6 +867,48 @@ function setup() {
     reloadSpeed,
     player
   );
+
+  // reload hint text setup
+  const reloadStyle = new PIXI.TextStyle({
+    fill: 'red',
+    fontFamily: 'Impact',
+    fontSize: 40,
+    stroke: 'white'
+  });
+  reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
+  reloadText.position.set(
+    dungeon.x + dungeon.width / 10 * 6,
+    dungeon.y + dungeon.height / 7 * 6
+  );
+  reloadText.visible = false;
+
+  healthBar = new PIXI.Container();
+  healthBar.position.set(
+    dungeon.x + dungeon.width / 10,
+    dungeon.y + dungeon.height / 9 * 8
+  );
+  botLevel.addChild(healthBar);
+
+  //Create the black background rectangle
+  const innerBar = new PIXI.Graphics();
+  innerBar.beginFill(0x000000);
+  innerBar.drawRect(-5, -5, dungeon.width / 8 + 10, dungeon.height / 20 + 10);
+  innerBar.endFill();
+  healthBar.addChild(innerBar);
+
+  //Create the front red rectangle
+  const outerBar = new PIXI.Graphics();
+  outerBar.beginFill(0xFF3300);
+  outerBar.drawRect(0, 0, dungeon.width / 8, dungeon.height / 20);
+  outerBar.endFill();
+  healthBar.addChild(outerBar);
+
+  healthBar.outer = outerBar;
+  healthBar.outer.initialWidth = outerBar.width;
+  healthBar.updateHealth = (health, totalHealth) => {
+    healthBar.outer.width = (health / totalHealth) *
+      healthBar.outer.initialWidth;
+  };
 
   enemyManager = new EnemyManager(
     5,
@@ -835,7 +937,6 @@ function setup() {
     player.shootingTimeout = gunTimeout;
   });
 
-
   // adding texts on the stage
   botLevel.addChild(ammoLeftText);
   botLevel.addChild(reloadText);
@@ -853,6 +954,12 @@ function setup() {
   down.release = () => player.vy += linearSpeed;
   reloadButton.press = () => playerBulletPool.reload();
 
+  sound.play('mainMenu', {
+    loop: true,
+    speed: 1,
+    volume: 0.3
+  });
+
   animate();
 }
 
@@ -862,15 +969,15 @@ function ResetLevel() {
   botLevel.addChild(dungeon);
 
   player = new PIXI.extras.AnimatedSprite(playerStaleRight);
-  player.position.x = renderer.width / 4;
-  player.position.y = renderer.height / 2;
+  player.position.set(renderer.width / 4, renderer.height / 2);
   player.vx = 0;
   player.vy = 0;
   player.scale.x = 1.5;
   player.scale.y = 1.5;
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
-  player.health = 100;
+  player.initialHealth = 100;
+  player.health = player.initialHealth;
   player.isAlive = true;
   player.state = animationState.idleRight;
   botLevel.addChild(player);
@@ -885,10 +992,13 @@ function ResetLevel() {
     player
   );
 
-  ammoLeftText.text = '12 / 12';
+  ammoLeftText.text = playerBulletPool.getBulletsLeft() +
+    ' / ' + playerBulletPool.getBulletsAmount();
   reloadText.visible = false;
+  healthBar.updateHealth(player.health, player.initialHealth);
   botLevel.addChild(ammoLeftText);
   botLevel.addChild(reloadText);
+  botLevel.addChild(healthBar);
 
   enemyManager = new EnemyManager(
     5,
@@ -903,7 +1013,7 @@ function ResetLevel() {
     enemyStaleRight);
 }
 
-function WaveCleared(wave, step) {
+function WaveCleared(wave, step, firstWave) {
   const waveTextStyle = new PIXI.TextStyle({
     fill: 'white',
     fontFamily: 'Impact',
@@ -920,15 +1030,15 @@ function WaveCleared(wave, step) {
   case 1: {
     waveText = new PIXI.Text('WAVE ' + wave + ' CLEARED', waveTextStyle);
     waveText.anchor.set(0.5);
-    waveText.x = renderer.width / 2;
-    waveText.y = renderer.height / 2.5;
-    waveText.visible = true;
+    waveText.position.set(renderer.width / 2, renderer.height / 2.5);
+    waveText.visible = !firstWave;
 
     botLevel.addChild(waveText);
     break;
   }
   case 2: {
     waveText.text = 'WAVE ' + wave + ' STARTING...';
+    waveText.visible = true;
     break;
   }
   case 3: {
@@ -939,8 +1049,7 @@ function WaveCleared(wave, step) {
     waveCountdown.anchor.set(0.5);
     waveCountdown.scale.x = 1;
     waveCountdown.scale.y = 1;
-    waveCountdown.x = renderer.width / 2;
-    waveCountdown.y = renderer.height / 2;
+    waveCountdown.position.set(renderer.width / 2, renderer.height / 2);
     waveCountdown.visible = true;
     botLevel.addChild(waveCountdown);
     break;
@@ -1051,7 +1160,9 @@ function AnimatePlayer(mouseX) {
 }
 
 function animate() {
-  if (gameState === GAME_STATES.botLevel && player.isAlive) {
+  if (gameState === GAME_STATES.waiting) {
+    renderer.render(waitingScreen);
+  } else if (gameState === GAME_STATES.botLevel && player.isAlive) {
     playerBulletPool.updateBulletsSpeed();
     enemyManager.Execute();
 
@@ -1080,16 +1191,11 @@ function animate() {
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.mainMenu) {
     renderer.render(mainMenuScreen);
+
+    if (titleText.rotation >= 0.1) rotation = rotNeg;
+    else if (titleText.rotation <= -0.1) rotation = rotPos;
+    titleText.rotation += rotation;
   }
 
   requestAnimationFrame(animate);
 }
-
-export const result = {
-  stageLevel: botLevel,
-  player,
-  playerBulletPool,
-  dungeon,
-  renderer,
-  AnimatePlayer
-};

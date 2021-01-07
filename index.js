@@ -7,14 +7,21 @@ const port = parseInt(process.env.PORT);
 const host = port === 3000 ? '127.0.0.1' : '0.0.0.0';
 const db = require('./built/PostgresConnection');
 const DBInterface = require('./built/ScoresPostgres');
+const fastifyCors = require('fastify-cors');
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname),
   default: '/'
+}).register(fastifyCors, {
+  origin: '*',
+  methods: 'GET,POST,PUT,DELETE,OPTIONS',
+  allowedHeaders:
+    'Content-Type,Access-Control-Allow-Headers,Authorization,X-Requested-With'
 });
 
 // Declare a route
-fastify.get('/', async (req, res) => (res.sendFile('index.html')));
+fastify.get('/', async (req, res) =>
+  res.status(200).sendFile('index.html'));
 fastify.get('/scores', async (req, res) => {
   const scores = await DBInterface
     .DBScores(db.createConnection())
@@ -47,7 +54,3 @@ const start = async () => {
   }
 };
 start();
-
-module.exports = {
-  fastify
-};
