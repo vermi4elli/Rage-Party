@@ -1,3 +1,4 @@
 node_modules/
 scripts/pixi.min.js
 dist/
+built/
