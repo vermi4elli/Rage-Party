@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CheckScore = exports.CheckName = void 0;
 const CheckName = (name) => {
     return /[a-zA-Z_ 0-9]+/.test(name) &&
-        !/[^a-zA-Z_ 0-9]/.test(name);
+        !/[^a-zA-Z_ 0-9]+/.test(name);
 };
 exports.CheckName = CheckName;
 const CheckScore = (score) => {
