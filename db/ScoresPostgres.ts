@@ -2,35 +2,46 @@
 
 import {PostgresConnection} from './PostgresConnection';
 import * as queries from './Queries';
+import * as pg from 'pg';
 import {Score, Scores} from "./DBInterface";
 import {CheckName, CheckScore} from "./InputValidator";
 
 export const DBScores = (db: PostgresConnection): Scores => {
     return {
-        getScoreByName: async (name: string) => {
-            if (CheckName(name)) {
-                return db.connection()
-                    .query(queries.getScoreByName(name))
-                    .then((result: Score) => result.rows)
-                    .catch((err: Error) => console.log(err));
-            } else {
-
-            }
+        getScoreByName: async (name: string): Promise<Score[] | { error : string }> => {
+            return CheckName(name) ?
+                db.connection().connect().then((client: pg.PoolClient) =>
+                    client.query(queries.getScoreByName(name))
+                    .then((result: pg.QueryResult<Score>) => {
+                        return result.rows;
+                    })
+                    .catch((err: Error) => {
+                        return {error: err.message};
+                    })) : {error: 'name is not correct'};
         },
-        getScores: async () => {
-            return db.connection()
-                .query(queries.getScores())
-                .then((result: Score) => result.rows)
-                .catch((err: Error) => console.log(err));
+        getScores: async (): Promise<Score[] | { error : string }> => {
+            return db.connection().connect().then((client: pg.PoolClient) =>
+                client
+                    .query(queries.getScores())
+                    .then((result: pg.QueryResult<Score>) => {
+                        return result.rows
+                    })
+                    .catch((err: Error) => {
+                        return {error: err.message}
+                    }));
         },
-        uploadScore: async (name: string, score: number) => {
-            if (CheckName(name) && CheckScore(score)) {
-                return db.connection()
-                    .query(queries.uploadScore(name, score))
-                    .catch((err: Error) => console.log(err));
-            } else {
-
-            }
+        uploadScore: async (name: string, score: number): Promise<Score[] | { error : string }> => {
+            return (CheckName(name) && CheckScore(score)) ?
+                db.connection().connect().then((client: any) =>
+                    client
+                        .query(queries.uploadScore(name, score))
+                        .then((result: pg.QueryResult<Score>) => {
+                            return result
+                        })
+                        .catch((err: Error) => {
+                            return { error : err.message }
+                        })) :
+                { error : 'the data is not correct' };
         }
     };
 }

@@ -6,29 +6,36 @@ const InputValidator_1 = require("./InputValidator");
 const DBScores = (db) => {
     return {
         getScoreByName: async (name) => {
-            if (InputValidator_1.CheckName(name)) {
-                return db.connection()
-                    .query(queries.getScoreByName(name))
-                    .then((result) => result.rows)
-                    .catch((err) => console.log(err));
-            }
-            else {
-            }
+            return InputValidator_1.CheckName(name) ?
+                db.connection().connect().then((client) => client.query(queries.getScoreByName(name))
+                    .then((result) => {
+                    return result.rows;
+                })
+                    .catch((err) => {
+                    return { error: err.message };
+                })) : { error: 'name is not correct' };
         },
         getScores: async () => {
-            return db.connection()
+            return db.connection().connect().then((client) => client
                 .query(queries.getScores())
-                .then((result) => result.rows)
-                .catch((err) => console.log(err));
+                .then((result) => {
+                return result.rows;
+            })
+                .catch((err) => {
+                return { error: err.message };
+            }));
         },
         uploadScore: async (name, score) => {
-            if (InputValidator_1.CheckName(name) && InputValidator_1.CheckScore(score)) {
-                return db.connection()
+            return (InputValidator_1.CheckName(name) && InputValidator_1.CheckScore(score)) ?
+                db.connection().connect().then((client) => client
                     .query(queries.uploadScore(name, score))
-                    .catch((err) => console.log(err));
-            }
-            else {
-            }
+                    .then((result) => {
+                    return result;
+                })
+                    .catch((err) => {
+                    return { error: err.message };
+                })) :
+                { error: 'the data is not correct' };
         }
     };
 };

@@ -2,21 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createConnection = void 0;
 require('dotenv').config();
-const { Client } = require('pg');
-const client = new Client({
+const { Pool } = require('pg');
+const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false
     }
 });
-client
+pool
     .connect()
     .then(() => {
     console.log('Connection to remote DB is working...');
 });
 const createConnection = function () {
     return {
-        connection: () => client
+        connection: () => pool
     };
 };
 exports.createConnection = createConnection;

@@ -1,11 +1,11 @@
 'use strict';
 
-export const CheckName = (name: string) => {
-    return /[a-zA-Z0-9]+/.test(name) &&
-        !/[^a-zA-Z0-9]/.test(name);
+export const CheckName = (name: string): boolean => {
+    return /[a-zA-Z_ 0-9]+/.test(name) &&
+        !/[^a-zA-Z_ 0-9]/.test(name);
 }
 
-export const CheckScore = (score: number) => {
+export const CheckScore = (score: number): boolean => {
     return /[0-9]+/.test(score.toString()) &&
     !/[^0-9]+/.test(score.toString());
 }

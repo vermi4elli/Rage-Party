@@ -1,28 +1,29 @@
 'use strict';
 
 require('dotenv').config();
-const { Client } = require('pg');
+import * as pg from 'pg';
+const { Pool } = require('pg');
 
-const client = new Client({
+const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
         rejectUnauthorized: false
     }
 });
 
-client
+pool
     .connect()
     .then(() => {
         console.log('Connection to remote DB is working...');
     });
 
 export type PostgresConnection = {
-    connection: () => any
+    connection: () => pg.Pool
 };
 
 export const createConnection = function (): PostgresConnection {
     return {
-        connection: () => client
+        connection: () => pool
     }
 };
 

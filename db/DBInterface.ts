@@ -1,9 +1,9 @@
 'use strict';
 
-export type Score = Record<string, number>
+export type Score = { score: number, name: string }
 
 export type Scores = {
-    getScoreByName: (name: string) => Promise<Score>,
-    getScores: () => Promise<Score>,
+    getScoreByName: (name: string) => Promise<Score[] | { error: string }>,
+    getScores: () => Promise<Score[] | { error : string }>,
     uploadScore: (name: string, score: number) => void
 };
