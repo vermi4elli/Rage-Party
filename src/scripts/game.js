@@ -1277,12 +1277,22 @@ async function animate() {
     // render the container
     renderer.render(botLevel);
   } else if (gameState === GAME_STATES.botLevel && !player.isAlive) {
+    setDeathScreen = false;
     gameState = GAME_STATES.deathScreen;
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.deathScreen) {
     if (!setDeathScreen) {
 
+      deathScreen.removeChildren();
       deathText.text = 'YOU DIED WITH SCORE: ' + tempScore;
+      deathScreen.addChild(deathText);
+      deathScreen.addChild(restartButton);
+      deathScreen.addChild(exitButton);
+
+      // Text hint
+      const textHint = new PIXI.Text('Enter your name:', scoreLineStyle);
+      textHint.position.set(renderer.width / 6, renderer.height / 3 - 50);
+      deathScreen.addChild(textHint);
 
       // Text input component
       nameInput = new PIXI.Container();
@@ -1290,7 +1300,10 @@ async function animate() {
       const inputField = new PixiTextInput('', style);
       inputField.width = renderer.width / 4;
       nameInput.addChild(inputField);
-      nameInput.position.set(renderer.width / 3, renderer.height / 3 - 20);
+      nameInput.position.set(
+        renderer.width / 6 * 2.8,
+        renderer.height / 3 - 44
+      );
 
       deathScreen.addChild(nameInput);
       setDeathScreen = true;
@@ -1303,7 +1316,9 @@ async function animate() {
     renderer.render(mainMenuScreen);
 
     if (ableToPost && !PostedData) {
-      const text = nameInput.children[0].text;
+      const text = (nameInput.children[0].text === '' ?
+        'EmptyName' :
+        nameInput.children[0].text);
       const result = await fetch(`upload/?name=${text}&score=${tempScore}`,
         {
           method: 'POST'
