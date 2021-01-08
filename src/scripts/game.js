@@ -310,7 +310,9 @@ class BulletPool {
     if (this.isReloading &&
       this.reloadCooldown > 0
     ) {
-      if (this.sourceSprite === player) reloadText.text = 'RELOADING...';
+      if (this.sourceSprite === player) {
+        reloadText.text = 'RELOADING...';
+      }
       --this.reloadCooldown;
     } else if (this.isReloading && this.reloadCooldown === 0) {
       this.isReloading = false;
@@ -363,9 +365,6 @@ class BulletPool {
     } else if (autoReload &&
       this.bulletsLeft === 0 &&
       !this.isReloading) {
-      if (this.sourceSprite === player) {
-        sound.stop('playerShot');
-      }
       this.reload();
     } else if (!this.isReloading &&
       this.bulletsLeft === 0 &&
@@ -380,9 +379,9 @@ class BulletPool {
   }
 
   reload() {
-    if (
-      !this.isReloading &&
-      this.getBulletsLeft() !== this.getBulletsAmount()
+    if (this.sourceSprite !== player ||
+      (!this.isReloading &&
+      this.getBulletsLeft() !== this.getBulletsAmount())
     ) {
       this.isReloading = true;
       this.reloadCooldown = this.reloadSpeed;
@@ -462,7 +461,8 @@ class EnemyManager {
       this.enemyBulletAmount,
       this.enemyBulletSpeed,
       this.enemyBulletDamage,
-      this.enemyReloadSpeed
+      this.enemyReloadSpeed + Math.floor(Math.random() * 20),
+      gunTimeout + Math.floor(Math.random() * 20)
     );
     this.enemiesLeft = this.enemyAmount;
 
@@ -479,7 +479,8 @@ class EnemyManager {
     enemyBulletAmount,
     enemyBulletSpeed,
     enemyBulletDamage,
-    enemyReloadSpeed
+    enemyReloadSpeed,
+    enemyGunTimeout
   ) {
     const enemyTemp = new PIXI.extras.AnimatedSprite(
       this.enemyLeftStaleTexture
@@ -495,6 +496,7 @@ class EnemyManager {
     enemyTemp.vx = 0;
     enemyTemp.vy = 0;
     enemyTemp.state = animationState.idleLeft;
+    enemyTemp.gunTimeout = enemyGunTimeout;
     botLevel.addChild(enemyTemp);
 
     const enemyBulletPool = new BulletPool(
@@ -511,8 +513,8 @@ class EnemyManager {
       enemy: enemyTemp,
       enemyHealth,
       enemyBulletPool,
-      shootingTimeout: 0,
-      moveChangeFreezer: this.FreezerVelocityChange
+      shootingTimeout: Math.floor(Math.random() * 10),
+      moveChangeFreezer: this.FreezerVelocityChange / 4
     };
 
     this.enemies.push(enemyStruct);
@@ -546,7 +548,8 @@ class EnemyManager {
 
           // try to fire bullets
           if (this.enemies[i].active && player.isAlive) {
-            if (this.enemies[i].shootingTimeout === gunTimeout) {
+            if (this.enemies[i].shootingTimeout ===
+              this.enemies[i].enemy.gunTimeout) {
               this.enemies[i].shootingTimeout = 0;
               this.enemies[i].enemyBulletPool.shoot(player.x, player.y, true);
             } else {
