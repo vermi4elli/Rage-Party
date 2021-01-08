@@ -3,6 +3,7 @@ import { ScaleToWindow } from './scaleWindow';
 import { keyboard } from './keyboard';
 import { checkCollision, collisionType, contain } from './contain';
 import sound from 'pixi-sound';
+const PixiTextInput = require('./PixiTextInput');
 
 const renderer =
   PIXI.autoDetectRenderer({
@@ -142,9 +143,14 @@ let player,
   scoreButton,
   backButton,
   scoreData,
+  tempScore = 0,
+  nameInput,
   tutorialText,
   tutorialInlineText,
-  fetchedData = false;
+  fetchedData = false,
+  ableToPost = false,
+  PostedData = false,
+  setDeathScreen = false;
 
 const explosionOrangeTextures = [],
   explosionRedTextures = [],
@@ -159,7 +165,12 @@ const explosionOrangeTextures = [],
   enemyRunLeftBack = [],
   enemyRunRightBack = [],
   enemyStaleLeft = [],
-  enemyStaleRight = [];
+  enemyStaleRight = [],
+  left = keyboard('KeyA'),
+  up = keyboard('KeyW'),
+  right = keyboard('KeyD'),
+  down = keyboard('KeyS'),
+  reloadButton = keyboard('KeyR');
 
 const gunTimeout = 10,
   bulletAmount = 10,
@@ -177,12 +188,7 @@ const gunTimeout = 10,
     runLeft: 3,
     runRightBack: 4,
     runLeftBack: 5
-  },
-  left = keyboard('KeyA'),
-  up = keyboard('KeyW'),
-  right = keyboard('KeyD'),
-  down = keyboard('KeyS'),
-  reloadButton = keyboard('KeyR');
+  };
 
 let rotation = rotPos;
 
@@ -542,6 +548,8 @@ class EnemyManager {
                 this.enemies[i].enemy.visible = false;
                 botLevel.removeChild(this.enemies[i].enemy);
                 this.enemiesLeft--;
+                tempScore += 100;
+                console.log(tempScore);
               }
             }
           }
@@ -766,6 +774,8 @@ function setup() {
   exitButton.on('pointerdown', () => {
     gameState = GAME_STATES.mainMenu;
 
+    ableToPost = true;
+
     sound.stop('battleMusic');
 
     if (!sound.find('mainMenu').isPlaying) {
@@ -816,14 +826,16 @@ function setup() {
   backButton.interactive = true;
   backButton.visible = true;
   backButton.on('pointerdown', () => {
+    fetchedData = false;
     gameState = GAME_STATES.mainMenu;
   });
 
   // adding the buttons to the death screen
-  deathText = new PIXI.Text('YOU DIED!', deathStyle);
+  deathText = new PIXI.Text('', deathStyle);
   deathText.anchor.set(0.5);
   deathText.position.set(buttonX, textY);
   deathText.visible = true;
+
   deathScreen.addChild(restartButton);
   deathScreen.addChild(exitButton);
   deathScreen.addChild(deathText);
@@ -1044,7 +1056,6 @@ function setup() {
 
   ScaleToWindow(renderer.view);
 
-  // player control
   left.press = () => player.vx -= linearSpeed;
   left.release = () => player.vx += linearSpeed;
   up.press = () => player.vy += linearSpeed;
@@ -1066,6 +1077,8 @@ function setup() {
 
 function ResetLevel() {
   botLevel.removeChildren();
+
+  tempScore = 0;
 
   botLevel.addChild(dungeon);
 
@@ -1267,11 +1280,39 @@ async function animate() {
     gameState = GAME_STATES.deathScreen;
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.deathScreen) {
+    if (!setDeathScreen) {
+
+      deathText.text = 'YOU DIED WITH SCORE: ' + tempScore;
+
+      // Text input component
+      nameInput = new PIXI.Container();
+      const style = { fontFamily: 'Arial', fontSize: 40, fill: 0x000000 };
+      const inputField = new PixiTextInput('', style);
+      inputField.width = renderer.width / 4;
+      nameInput.addChild(inputField);
+      nameInput.position.set(renderer.width / 3, renderer.height / 3 - 20);
+
+      deathScreen.addChild(nameInput);
+      setDeathScreen = true;
+    }
+
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.tutorialScreen) {
     renderer.render(tutorialScreen);
   } else if (gameState === GAME_STATES.mainMenu) {
     renderer.render(mainMenuScreen);
+
+    if (ableToPost && !PostedData) {
+      const text = nameInput.children[0].text;
+      const result = await fetch(`upload/?name=${text}&score=${tempScore}`,
+        {
+          method: 'POST'
+        });
+
+      nameInput.children[0].text = '';
+
+      PostedData = true;
+    }
 
     if (titleText.rotation >= 0.1) rotation = rotNeg;
     else if (titleText.rotation <= -0.1) rotation = rotPos;
@@ -1286,6 +1327,8 @@ async function animate() {
         prevX2 = renderer.width / 5 * 2.75,
         origY = renderer.height / 12;
       let prevY = origY;
+
+      scoreScreen.removeChildren();
 
       const scoreText = new PIXI.Text(
         'TOP-10 SCORES', scoreTitleStyle);

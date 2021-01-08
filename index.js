@@ -40,6 +40,7 @@ fastify.post('/upload/:score', async (req, res) => {
   const answer = await DBInterface
     .DBScores(db.createConnection())
     .uploadScore(name, score);
+  console.log(answer);
   res.status(200).send('Score added: ' + answer);
 });
 
