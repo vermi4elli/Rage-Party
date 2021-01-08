@@ -144,12 +144,13 @@ let player,
   backButton,
   scoreData,
   tempScore = 0,
+  recentScore = tempScore,
   nameInput,
   tutorialText,
   tutorialInlineText,
   fetchedData = false,
   ableToPost = false,
-  PostedData = false,
+  postedData = false,
   setDeathScreen = false;
 
 const explosionOrangeTextures = [],
@@ -759,7 +760,7 @@ function setup() {
   restartButton.visible = true;
   restartButton.on('pointerdown', () => {
     gameState = GAME_STATES.botLevel;
-
+    postedData = false;
     ResetLevel();
   });
 
@@ -772,7 +773,7 @@ function setup() {
   exitButton.visible = true;
   exitButton.on('pointerdown', () => {
     gameState = GAME_STATES.mainMenu;
-
+    postedData = false;
     ableToPost = true;
 
     sound.stop('battleMusic');
@@ -1077,6 +1078,7 @@ function setup() {
 function ResetLevel() {
   botLevel.removeChildren();
 
+  recentScore = tempScore;
   tempScore = 0;
 
   botLevel.addChild(dungeon);
@@ -1288,6 +1290,8 @@ async function animate() {
       deathScreen.addChild(restartButton);
       deathScreen.addChild(exitButton);
 
+      recentScore = tempScore;
+
       // Text hint
       const textHint = new PIXI.Text('Enter your name:', scoreLineStyle);
       textHint.position.set(renderer.width / 6, renderer.height / 3 - 50);
@@ -1314,11 +1318,13 @@ async function animate() {
   } else if (gameState === GAME_STATES.mainMenu) {
     renderer.render(mainMenuScreen);
 
-    if (ableToPost && !PostedData) {
+    if (ableToPost && !postedData) {
       const text = (nameInput.children[0].text === '' ?
         'EmptyName' :
         nameInput.children[0].text);
-      const result = await fetch(`upload/?name=${text}&score=${tempScore}`,
+      console.log(text);
+      console.log(recentScore);
+      const result = await fetch(`upload/?name=${text}&score=${recentScore}`,
         {
           method: 'POST'
         });
@@ -1326,7 +1332,7 @@ async function animate() {
 
       nameInput.children[0].text = '';
 
-      PostedData = true;
+      postedData = true;
     }
 
     if (titleText.rotation >= 0.1) rotation = rotNeg;
