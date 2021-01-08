@@ -22,7 +22,8 @@ const GAME_STATES = {
   mainMenu: 1,
   botLevel: 2,
   deathScreen: 3,
-  scoreScreen: 4
+  scoreScreen: 4,
+  tutorialScreen: 5
 };
 
 let gameState = GAME_STATES.waiting;
@@ -32,13 +33,59 @@ const loadingScreen = new PIXI.Container();
 const deathScreen = new PIXI.Container();
 const mainMenuScreen = new PIXI.Container();
 const waitingScreen = new PIXI.Container();
+const scoreScreen = new PIXI.Container();
+const tutorialScreen = new PIXI.Container();
 
+// Text styles
 const loadingStyle = new PIXI.TextStyle({
   fill: 'white',
   fontFamily: 'Impact',
   fontSize: 80,
   stroke: 'white'
 });
+const ammoLeftStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 40,
+  stroke: 'white'
+});
+const deathStyle = new PIXI.TextStyle({
+  fill: 'red',
+  fontFamily: 'Impact',
+  fontSize: 100,
+  stroke: 'white'
+});
+const reloadStyle = new PIXI.TextStyle({
+  fill: 'red',
+  fontFamily: 'Impact',
+  fontSize: 40,
+  stroke: 'white'
+});
+const waveTextStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 100,
+  stroke: 'white'
+});
+const waveCountdownStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 200,
+  stroke: 'white'
+});
+const scoreLineStyle = new PIXI.TextStyle({
+  fill: 'white',
+  fontFamily: 'Impact',
+  fontSize: 50,
+  stroke: 'white'
+});
+const scoreTitleStyle = new PIXI.TextStyle({
+  fill: 'red',
+  fontFamily: 'Impact',
+  fontSize: 50,
+  stroke: 'white'
+});
+
 const loadingText = new PIXI.Text('LOADING...', loadingStyle);
 loadingText.position.set(renderer.width / 4 * 1.5, renderer.height / 4 * 1.5);
 loadingText.visible = true;
@@ -48,8 +95,8 @@ renderer.render(loadingScreen);
 
 // the sprites array
 const textures = [
-  './assets/bullet.png',
-  './assets/bullet_enemy.png',
+  './assets/bullets/player_bullet.png',
+  './assets/bullets/enemy_bullet.png',
   './assets/levels/baseMap.png'];
 for (let i = 1, j = 6; i <= 6; i++, j--) {
   textures.push(`./assets/explo_orange/explo_orange_${i}.png`);
@@ -59,16 +106,19 @@ for (let i = 1, j = 6; i <= 6; i++, j--) {
   textures.push(`./assets/enemy/runLeft/enemy_l_${i}.png`);
   textures.push(`./assets/enemy/runRight/enemy_r_${i}.png`);
 }
-textures.push('./assets/restart_button.png');
-textures.push('./assets/exit_button.png');
-textures.push('./assets/start_button.png');
-textures.push('./assets/score_button.png');
+textures.push('./assets/buttons/restart_button.png');
+textures.push('./assets/buttons/exit_button.png');
+textures.push('./assets/buttons/start_button.png');
+textures.push('./assets/buttons/score_button.png');
+textures.push('./assets/buttons/back_button.png');
 
 const loader = new PIXI.loaders.Loader();
 loader.add(textures);
-loader.add('playerShot', './assets/laser_player.mp3');
-loader.add('mainMenu', './assets/mainMenuMusic.mp3');
-loader.add('battleMusic', './assets/battleMusic.mp3');
+loader.add('playerShot', './assets/sounds/laser_player.mp3');
+loader.add('playerReload', './assets/sounds/reload_player.mp3');
+loader.add('enemyShot', './assets/sounds/laser_enemy.mp3');
+loader.add('mainMenu', './assets/music/mainMenuMusic.mp3');
+loader.add('battleMusic', './assets/music/battleMusic.mp3');
 loader.onComplete.add(setup);
 loader.load();
 
@@ -89,7 +139,12 @@ let player,
   startButton,
   restartButton,
   exitButton,
-  scoreButton;
+  scoreButton,
+  backButton,
+  scoreData,
+  tutorialText,
+  tutorialInlineText,
+  fetchedData = false;
 
 const explosionOrangeTextures = [],
   explosionRedTextures = [],
@@ -164,8 +219,7 @@ class BulletPool {
       const bullet = new PIXI.Sprite(this.bulletTexture);
       bullet.position.set(0, 0);
       bullet.visible = false;
-      bullet.scale.x = 1.5;
-      bullet.scale.y = 1.5;
+      bullet.scale.set(1.5);
       bullet.direction = new PIXI.Point(0, 0);
       this.bulletPool.push(bullet);
       botLevel.addChild(bullet);
@@ -256,7 +310,7 @@ class BulletPool {
     if (this.isReloading &&
       this.reloadCooldown > 0
     ) {
-      if (this.sourceSprite === player) reloadText.text = 'WAIT';
+      if (this.sourceSprite === player) reloadText.text = 'RELOADING...';
       --this.reloadCooldown;
     } else if (this.isReloading && this.reloadCooldown === 0) {
       this.isReloading = false;
@@ -299,6 +353,12 @@ class BulletPool {
           speed: 3,
           volume: 0.3
         });
+      } else {
+        sound.play('enemyShot', {
+          loop: false,
+          speed: 3,
+          volume: 0.15
+        });
       }
     } else if (autoReload &&
       this.bulletsLeft === 0 &&
@@ -320,8 +380,21 @@ class BulletPool {
   }
 
   reload() {
-    this.isReloading = true;
-    this.reloadCooldown = this.reloadSpeed;
+    if (
+      !this.isReloading &&
+      this.getBulletsLeft() !== this.getBulletsAmount()
+    ) {
+      this.isReloading = true;
+      this.reloadCooldown = this.reloadSpeed;
+      if (this.sourceSprite === player) {
+        reloadText.visible = true;
+        sound.play('playerReload', {
+          loop: false,
+          speed: 1,
+          volume: 0.6
+        });
+      }
+    }
   }
 }
 
@@ -417,8 +490,7 @@ class EnemyManager {
       dungeon.y + 90 + Math.random() *
       (renderer.height - 270) // available height
     );
-    enemyTemp.scale.x = 1.5;
-    enemyTemp.scale.y = 1.5;
+    enemyTemp.scale.set(1.5);
     enemyTemp.visible = true;
     enemyTemp.vx = 0;
     enemyTemp.vy = 0;
@@ -668,15 +740,8 @@ function setup() {
     offsetY = renderer.height / 4,
     buttonY = renderer.height / 2;
 
-  const deathStyle = new PIXI.TextStyle({
-    fill: 'red',
-    fontFamily: 'Impact',
-    fontSize: 100,
-    stroke: 'white'
-  });
-
   restartButton = new PIXI.Sprite(
-    PIXI.utils.TextureCache['./assets/restart_button.png']);
+    PIXI.utils.TextureCache['./assets/buttons/restart_button.png']);
   restartButton.anchor.set(0.5);
   restartButton.position.set(buttonX, buttonY);
   restartButton.buttonMode = true;
@@ -689,7 +754,7 @@ function setup() {
   });
 
   exitButton = new PIXI.Sprite(
-    PIXI.utils.TextureCache['./assets/exit_button.png']);
+    PIXI.utils.TextureCache['./assets/buttons/exit_button.png']);
   exitButton.anchor.set(0.5);
   exitButton.position.set(buttonX, buttonY + offsetY);
   exitButton.buttonMode = true;
@@ -700,24 +765,26 @@ function setup() {
 
     sound.stop('battleMusic');
 
-    sound.play('mainMenu', {
-      loop: true,
-      speed: 1,
-      volume: 0.3
-    });
+    if (!sound.find('mainMenu').isPlaying) {
+      sound.play('mainMenu', {
+        loop: true,
+        speed: 1,
+        volume: 0.3
+      });
+    }
 
     ResetLevel();
   });
 
   startButton = new PIXI.Sprite(
-    PIXI.utils.TextureCache['./assets/start_button.png']);
+    PIXI.utils.TextureCache['./assets/buttons/start_button.png']);
   startButton.anchor.set(0.5);
   startButton.position.set(buttonX, buttonY);
   startButton.buttonMode = true;
   startButton.interactive = true;
   startButton.visible = true;
   startButton.on('pointerdown', () => {
-    gameState = GAME_STATES.botLevel;
+    gameState = GAME_STATES.tutorialScreen;
 
     sound.stop('mainMenu');
 
@@ -729,7 +796,7 @@ function setup() {
   });
 
   scoreButton = new PIXI.Sprite(
-    PIXI.utils.TextureCache['./assets/score_button.png']);
+    PIXI.utils.TextureCache['./assets/buttons/score_button.png']);
   scoreButton.anchor.set(0.5);
   scoreButton.position.set(buttonX, buttonY + offsetY);
   scoreButton.buttonMode = true;
@@ -737,6 +804,16 @@ function setup() {
   scoreButton.visible = true;
   scoreButton.on('pointerdown', () => {
     gameState = GAME_STATES.scoreScreen;
+  });
+
+  backButton = new PIXI.Sprite(
+    PIXI.utils.TextureCache['./assets/buttons/back_button.png']);
+  backButton.anchor.set(0.5);
+  backButton.buttonMode = true;
+  backButton.interactive = true;
+  backButton.visible = true;
+  backButton.on('pointerdown', () => {
+    gameState = GAME_STATES.mainMenu;
   });
 
   // adding the buttons to the death screen
@@ -779,14 +856,13 @@ function setup() {
     previousMultiplier = multiplier;
     multiplier += 0.01;
   }
-  dungeon.scale.x = previousMultiplier;
-  dungeon.scale.y = previousMultiplier;
+  dungeon.scale.set(previousMultiplier);
   botLevel.addChild(dungeon);
 
   playerBulletTexture = new PIXI.Texture(
-    PIXI.utils.TextureCache['./assets/bullet.png']);
+    PIXI.utils.TextureCache['./assets/bullets/player_bullet.png']);
   enemyBulletTexture = new PIXI.Texture(
-    PIXI.utils.TextureCache['./assets/bullet_enemy.png']);
+    PIXI.utils.TextureCache['./assets/bullets/enemy_bullet.png']);
 
   playerStaleLeft.push(PIXI.utils.TextureCache[
     './assets/hero/runLeft/hero 6.png']);
@@ -830,13 +906,47 @@ function setup() {
     );
   }
 
+  tutorialInlineText = new PIXI.Text('HOW TO PLAY',
+    scoreTitleStyle);
+  tutorialInlineText.anchor.set(0.5);
+  tutorialInlineText.position.set(renderer.width / 2, renderer.height / 8);
+  tutorialInlineText.visible = true;
+  tutorialScreen.addChild(tutorialInlineText);
+
+  tutorialInlineText = new PIXI.Text(
+    'To shoot: hover the mouse over the enemy and press LMB.\n' +
+    'To move: use keys WASD. To reload: use key R.\n' +
+    'The bar in the left lower bottom corner \n' +
+    'represents your health level.\n' +
+    'The numbers in the right lower bottom corner \n' +
+    'represents your ammo left.\n',
+    scoreLineStyle);
+  tutorialInlineText.anchor.set(0.5);
+  tutorialInlineText.position.set(
+    renderer.width / 2,
+    renderer.height / 5 * 2.5
+  );
+  tutorialInlineText.visible = true;
+  tutorialScreen.addChild(tutorialInlineText);
+
+  tutorialText = new PIXI.Text('Press here to continue...', scoreTitleStyle);
+  tutorialText.anchor.set(0.5);
+  tutorialText.position.set(renderer.width / 2, renderer.height / 5 * 4);
+  tutorialText.visible = true;
+  tutorialText.buttonMode = true;
+  tutorialText.interactive = true;
+  tutorialText.on('pointerdown', () => {
+    gameState = GAME_STATES.botLevel;
+  });
+  tutorialScreen.interactive = true;
+  tutorialScreen.addChild(tutorialText);
+
   // the player sprite
   player = new PIXI.extras.AnimatedSprite(playerStaleRight);
   player.position.set(renderer.width / 4, renderer.height / 2);
   player.vx = 0;
   player.vy = 0;
-  player.scale.x = 1.5;
-  player.scale.y = 1.5;
+  player.scale.set(1.5);
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
   player.initialHealth = 100;
@@ -846,12 +956,6 @@ function setup() {
   botLevel.addChild(player);
 
   // ammo text setup
-  const ammoLeftStyle = new PIXI.TextStyle({
-    fill: 'white',
-    fontFamily: 'Impact',
-    fontSize: 40,
-    stroke: 'white'
-  });
   ammoLeftText = new PIXI.Text('', ammoLeftStyle);
   ammoLeftText.position.set(
     dungeon.x + dungeon.width / 10 * 8.6,
@@ -869,12 +973,6 @@ function setup() {
   );
 
   // reload hint text setup
-  const reloadStyle = new PIXI.TextStyle({
-    fill: 'red',
-    fontFamily: 'Impact',
-    fontSize: 40,
-    stroke: 'white'
-  });
   reloadText = new PIXI.Text('PRESS \'R\' TO RELOAD', reloadStyle);
   reloadText.position.set(
     dungeon.x + dungeon.width / 10 * 6,
@@ -885,7 +983,7 @@ function setup() {
   healthBar = new PIXI.Container();
   healthBar.position.set(
     dungeon.x + dungeon.width / 10,
-    dungeon.y + dungeon.height / 9 * 8
+    dungeon.y + dungeon.height / 7 * 6.1
   );
   botLevel.addChild(healthBar);
 
@@ -972,8 +1070,7 @@ function ResetLevel() {
   player.position.set(renderer.width / 4, renderer.height / 2);
   player.vx = 0;
   player.vy = 0;
-  player.scale.x = 1.5;
-  player.scale.y = 1.5;
+  player.scale.set(1.5);
   player.shooting = false;
   player.shootingTimeout = gunTimeout;
   player.initialHealth = 100;
@@ -1014,18 +1111,6 @@ function ResetLevel() {
 }
 
 function WaveCleared(wave, step, firstWave) {
-  const waveTextStyle = new PIXI.TextStyle({
-    fill: 'white',
-    fontFamily: 'Impact',
-    fontSize: 100,
-    stroke: 'white'
-  });
-  const waveCountdownStyle = new PIXI.TextStyle({
-    fill: 'white',
-    fontFamily: 'Impact',
-    fontSize: 200,
-    stroke: 'white'
-  });
   switch (step) {
   case 1: {
     waveText = new PIXI.Text('WAVE ' + wave + ' CLEARED', waveTextStyle);
@@ -1047,22 +1132,19 @@ function WaveCleared(wave, step, firstWave) {
 
     waveCountdown = new PIXI.Text('3', waveCountdownStyle);
     waveCountdown.anchor.set(0.5);
-    waveCountdown.scale.x = 1;
-    waveCountdown.scale.y = 1;
+    waveCountdown.scale.set(1);
     waveCountdown.position.set(renderer.width / 2, renderer.height / 2);
     waveCountdown.visible = true;
     botLevel.addChild(waveCountdown);
     break;
   }
   case 4: {
-    waveCountdown.scale.x = 1;
-    waveCountdown.scale.y = 1;
+    waveCountdown.scale.set(1);
     waveCountdown.text = '2';
     break;
   }
   case 5: {
-    waveCountdown.scale.x = 1;
-    waveCountdown.scale.y = 1;
+    waveCountdown.scale.set(1);
     waveCountdown.text = '1';
     break;
   }
@@ -1153,7 +1235,7 @@ function AnimatePlayer(mouseX) {
   return player;
 }
 
-function animate() {
+async function animate() {
   if (gameState === GAME_STATES.waiting) {
     renderer.render(waitingScreen);
   } else if (gameState === GAME_STATES.botLevel && player.isAlive) {
@@ -1183,13 +1265,61 @@ function animate() {
     renderer.render(deathScreen);
   } else if (gameState === GAME_STATES.deathScreen) {
     renderer.render(deathScreen);
+  } else if (gameState === GAME_STATES.tutorialScreen) {
+    renderer.render(tutorialScreen);
   } else if (gameState === GAME_STATES.mainMenu) {
     renderer.render(mainMenuScreen);
 
     if (titleText.rotation >= 0.1) rotation = rotNeg;
     else if (titleText.rotation <= -0.1) rotation = rotPos;
     titleText.rotation += rotation;
+  } else if (gameState === GAME_STATES.scoreScreen) {
+    if (!fetchedData) {
+
+      scoreData = await (await fetch('/scores', { method: 'GET' })).json();
+
+      const offsetY = renderer.height / 9,
+        prevX1 = renderer.width / 5,
+        prevX2 = renderer.width / 5 * 2.75,
+        origY = renderer.height / 12;
+      let prevY = origY;
+
+      const scoreText = new PIXI.Text(
+        'TOP-10 SCORES', scoreTitleStyle);
+      scoreText.anchor.set(0.5);
+      scoreText.position.set(
+        renderer.width / 2,
+        prevY
+      );
+      scoreText.visible = true;
+      scoreText.interactive = false;
+      scoreScreen.addChild(scoreText);
+
+      for (let i = 0; i < 10; i++) {
+        const gamer = scoreData[i];
+        const scoreLineText = new PIXI.Text(
+          i + 1 + ') ' +
+          (gamer.name.length > 10 ?
+            gamer.name.slice(0, 7) + '...' :
+            gamer.name) +
+          ' : ' + gamer.score, scoreLineStyle);
+        scoreLineText.position.set(
+          (i > 4 ? prevX2 : prevX1),
+          prevY + offsetY
+        );
+        prevY = (i === 4 ? origY : prevY += offsetY);
+        scoreLineText.visible = true;
+        scoreLineText.interactive = false;
+        scoreScreen.addChild(scoreLineText);
+      }
+      backButton.scale.set(0.5);
+      backButton.position.set(renderer.width / 2, prevY + offsetY * 2);
+      scoreScreen.addChild(backButton);
+
+      fetchedData = true;
+    }
+    renderer.render(scoreScreen);
   }
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(await animate);
 }
