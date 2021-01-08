@@ -1,5 +1,5 @@
 node_modules/
-scripts/pixi.min.js
+src/scripts/PixiTextInput.js
 dist/
 built/
 db/
