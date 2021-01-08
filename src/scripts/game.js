@@ -549,7 +549,6 @@ class EnemyManager {
                 botLevel.removeChild(this.enemies[i].enemy);
                 this.enemiesLeft--;
                 tempScore += 100;
-                console.log(tempScore);
               }
             }
           }
@@ -1323,6 +1322,7 @@ async function animate() {
         {
           method: 'POST'
         });
+      console.log(result);
 
       nameInput.children[0].text = '';
 
@@ -1356,7 +1356,12 @@ async function animate() {
       scoreText.interactive = false;
       scoreScreen.addChild(scoreText);
 
-      for (let i = 0; i < 10; i++) {
+      for (
+        let i = 0;
+        i < (scoreData.length >= 10 ?
+          10 :
+          scoreData.length);
+        i++) {
         const gamer = scoreData[i];
         const scoreLineText = new PIXI.Text(
           i + 1 + ') ' +
@@ -1374,7 +1379,7 @@ async function animate() {
         scoreScreen.addChild(scoreLineText);
       }
       backButton.scale.set(0.5);
-      backButton.position.set(renderer.width / 2, prevY + offsetY * 2);
+      backButton.position.set(renderer.width / 2, origY + offsetY * 7);
       scoreScreen.addChild(backButton);
 
       fetchedData = true;
