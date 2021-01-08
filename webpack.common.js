@@ -7,7 +7,7 @@ module.exports = {
   context: path.join(__dirname, 'src'),
   //entry file of the project,(relative to context)
   // entry: ['./scripts/game.js'],
-  entry: ['./scripts/game.js'],
+  entry: ['babel-polyfill', './scripts/game.js'],
   devtool: 'source-map',
   output: {
     path: path.resolve(__dirname, 'dist'),
