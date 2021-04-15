@@ -13,3 +13,9 @@ export const uploadScore = (name: string, score: number) => {
         values: [name, score]
     };
 };
+export const deleteScore = (name: string) => {
+    return {
+        text: 'delete from scores where name = ($1)',
+        values: [name]
+    }
+}

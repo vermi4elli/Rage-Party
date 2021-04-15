@@ -48,6 +48,20 @@ const DBScores = (db) => {
                     return result;
                 }) :
                 { error: 'the data is not correct' };
+        },
+        deleteScore: async (name) => {
+            return InputValidator_1.CheckName(name) ?
+                db.connection().connect().then((client) => {
+                    const result = client.query(queries.deleteScore(name))
+                        .then((result) => {
+                        return result.rows;
+                    })
+                        .catch((err) => {
+                        return { error: err.message };
+                    });
+                    client.release();
+                    return result;
+                }) : { error: 'name is not correct' };
         }
     };
 };

@@ -16,13 +16,17 @@ export const DBScores = (db: MongoConnection): Scores => {
         },
         uploadScore: async (name: string, score: number): Promise<Score> => {
             return (CheckName(name) && CheckScore(score)) ? db.connection().collection('scores').insertOne({name: name, score: score},
-                (err: any, result: any) => {
+                (err: Error, result: any) => {
                 if(err){
                     console.log(err);
                 }
                 console.log(result.ops);
                 result.ops;
             }) : {};
+        },
+        deleteScore: async (name: string): Promise<Score> => {
+            const collection = db.connection().collection('scores');
+            return CheckName(name) ? collection.remove({name: name}) : {};
         }
     };
 }

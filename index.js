@@ -43,6 +43,14 @@ fastify.post('/upload/:score', async (req, res) => {
   console.log(answer);
   res.status(200).send('Score added: ' + answer);
 });
+fastify.delete('/delete/:name', async (req, res) => {
+  const name = req.query.name;
+  // eslint-disable-next-line no-unused-vars
+  const answer = await DBInterface
+    .DBScores(db.createConnection())
+    .deleteScore(name);
+  res.status(200).send('Score deleted');
+});
 
 // Run the server!
 const start = async () => {

@@ -51,6 +51,20 @@ export const DBScores = (db: PostgresConnection): Scores => {
                     return result;
                 }) :
                 { error : 'the data is not correct' };
+        },
+        deleteScore: async (name: string): Promise<Score[] | { error : string }> => {
+            return CheckName(name) ?
+                db.connection().connect().then((client: pg.PoolClient) => {
+                    const result = client.query(queries.deleteScore(name))
+                        .then((result: pg.QueryResult<Score>) => {
+                            return result.rows;
+                        })
+                        .catch((err: Error) => {
+                            return {error: err.message};
+                        });
+                    client.release();
+                    return result;
+                }) : {error: 'name is not correct'};
         }
     };
 }

@@ -20,6 +20,10 @@ const DBScores = (db) => {
                 console.log(result.ops);
                 result.ops;
             }) : {};
+        },
+        deleteScore: async (name) => {
+            const collection = db.connection().collection('scores');
+            return InputValidator_1.CheckName(name) ? collection.remove({ name: name }) : {};
         }
     };
 };
