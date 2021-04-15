@@ -49,6 +49,7 @@ fastify.delete('/delete/:name', async (req, res) => {
   const answer = await DBInterface
     .DBScores(db.createConnection())
     .deleteScore(name);
+  console.log(answer);
   res.status(200).send('Score deleted');
 });
 
