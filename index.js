@@ -41,7 +41,7 @@ fastify.post('/upload/:score', async (req, res) => {
     .DBScores(db.createConnection())
     .uploadScore(name, score);
   console.log(answer);
-  res.status(200).send('Score added: ' + answer);
+  res.status(201).send('Score added: ' + answer);
 });
 fastify.delete('/delete/:name', async (req, res) => {
   const name = req.query.name;
